@@ -4,7 +4,7 @@ from torch.utils.data import DataLoader
 import lightning as L
 import datasets
 
-from hardcoregenai.pipeline.bpe_tokenizer import HcgaiTokenizer
+from ft4.pipeline.bpe_tokenizer import Ft4Tokenizer
 
 # TODO Get rid of this entirely; fold it into the regular StoriesDataModule,
 # refactoring, if needed, all the models to be able to use it.
@@ -26,7 +26,7 @@ class NonChunkedStoriesDataModule(L.LightningDataModule):
 
     def setup(self, stage):
         def _tokenizer(txt):
-            return {'tokens': [HcgaiTokenizer.RES_START] + HcgaiTokenizer.tokenize(txt) + [HcgaiTokenizer.RES_STOP]} # type:ignore
+            return {'tokens': [Ft4Tokenizer.RES_START] + Ft4Tokenizer.tokenize(txt) + [Ft4Tokenizer.RES_STOP]} # type:ignore
 
         tokenized = self.story_datasets.map(function=_tokenizer, input_columns=['story'], batched=False, remove_columns=self.story_datasets['train'].column_names, desc='Tokenizing', num_proc=os.cpu_count()) # type:ignore
 

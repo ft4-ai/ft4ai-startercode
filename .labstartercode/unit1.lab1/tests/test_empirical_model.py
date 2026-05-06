@@ -6,7 +6,7 @@ from collections import defaultdict, Counter
 
 import torch
 
-from hardcoregenai.models.empirical_model import EmpiricalModel
+from ft4.models.empirical_model import EmpiricalModel
 
 PAD_ID = 0
 VOCAB_SIZE = 6

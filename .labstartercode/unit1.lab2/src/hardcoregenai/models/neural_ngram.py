@@ -7,8 +7,8 @@ import torch.nn.functional as F
 from torch.optim import AdamW
 import lightning as L
 
-from hardcoregenai.models.mlp import MlpNet
-from hardcoregenai.pipeline.bpe_tokenizer import HcgaiTokenizer
+from ft4.models.mlp import MlpNet
+from ft4.pipeline.bpe_tokenizer import Ft4Tokenizer
 
 class NeuralNgram(L.LightningModule):
     def __init__(
@@ -19,7 +19,7 @@ class NeuralNgram(L.LightningModule):
             expansion_factor: int = 4,
             lr: float = 1e-3,
             warmup_steps: int=3000,
-            vocab_size: int = HcgaiTokenizer.vocab_size(),
+            vocab_size: int = Ft4Tokenizer.vocab_size(),
             padding_idx: int = 0):
         """
         NeuralNgram predicts the next token according to a neural network,

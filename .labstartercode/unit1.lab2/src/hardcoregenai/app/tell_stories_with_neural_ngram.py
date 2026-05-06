@@ -7,10 +7,10 @@ import lightning as L
 from lightning.pytorch.callbacks import ModelCheckpoint, RichProgressBar, TQDMProgressBar
 from lightning.pytorch.loggers import CSVLogger
 
-from hardcoregenai.pipeline.bpe_tokenizer import HcgaiTokenizer
-from hardcoregenai.pipeline.stories_data_module import StoriesDataModule
-from hardcoregenai.app.language_model import LangGen
-from hardcoregenai.models.neural_ngram import NeuralNgram
+from ft4.pipeline.bpe_tokenizer import Ft4Tokenizer
+from ft4.pipeline.stories_data_module import StoriesDataModule
+from ft4.app.language_model import LangGen
+from ft4.models.neural_ngram import NeuralNgram
 
 torch.set_float32_matmul_precision('medium')
 # FUTURE Add an option to load a saved ckpt and skip training
@@ -39,7 +39,7 @@ if TRAIN:
         save_last='link',
     )
 
-    model = NeuralNgram(n = N, vocab_size=HcgaiTokenizer.vocab_size(), dim=DIM, depth=DEPTH)
+    model = NeuralNgram(n = N, vocab_size=Ft4Tokenizer.vocab_size(), dim=DIM, depth=DEPTH)
 
     # Train
     print('# Training...')

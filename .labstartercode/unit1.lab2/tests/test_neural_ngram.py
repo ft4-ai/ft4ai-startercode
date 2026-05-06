@@ -3,10 +3,10 @@ import math
 
 import torch
 
-from hardcoregenai.models.neural_ngram import NeuralNgram
-from hardcoregenai.pipeline.fixed_batch_data_module import FixedBatchDataModule
-from hardcoregenai.pipeline.bpe_tokenizer import HcgaiTokenizer
-from hardcoregenai.util.test_helpers import *
+from ft4.models.neural_ngram import NeuralNgram
+from ft4.pipeline.fixed_batch_data_module import FixedBatchDataModule
+from ft4.pipeline.bpe_tokenizer import Ft4Tokenizer
+from ft4.util.test_helpers import *
 
 @pytest.mark.lab("unit1.lab2")
 def test_forward_backward_smoke():
@@ -66,7 +66,7 @@ def test_ckpt_val_ce():
     model.eval()
 
     # StoriesDataModule(small) -> one val batch
-    from hardcoregenai.pipeline.stories_data_module import StoriesDataModule
+    from ft4.pipeline.stories_data_module import StoriesDataModule
     sdm = StoriesDataModule(batch_size=8, seq_len=64, data_size="small")
     sdm.num_proc = 1
     sdm.prepare_data()
@@ -100,8 +100,8 @@ def test_ckpt_prompt_ranking(prompt, expected, unexpected):
     model = load_ckpt_cpu(ckpt, NeuralNgram)
     model.eval()
 
-    from hardcoregenai.pipeline.bpe_tokenizer import HcgaiTokenizer
-    tok = HcgaiTokenizer
+    from ft4.pipeline.bpe_tokenizer import Ft4Tokenizer
+    tok = Ft4Tokenizer
 
     def ids(s: str):
         return list(map(int, tok.tokenize(s)))

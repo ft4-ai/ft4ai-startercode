@@ -6,7 +6,7 @@ from torch.utils.data import TensorDataset, DataLoader
 import lightning as L
 from datasets import load_dataset, ClassLabel
 
-from hardcoregenai.models.mlp import MlpBlock
+from ft4.models.mlp import MlpBlock
 
 FEATURE_COLS: List[str] = ["SepalLengthCm", "SepalWidthCm", "PetalLengthCm", "PetalWidthCm"]
 NUM_FEATURES = len(FEATURE_COLS)

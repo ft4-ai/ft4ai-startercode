@@ -175,9 +175,9 @@ class BpeTokenizer:
 # Also: BOS and EOS are more common than START and STOP.
 # So name these: TOKEN_PAD, TOKEN_UNK, TOKEN_BOS, TOKEN_EOS.
 # Then, print out the known ones nicely '<BOS>', '<EOS>', etc.
-HcgaiTokenizer = BpeTokenizer.from_csv('src/hardcoregenai/pipeline/tokens.v01.csv')
-HcgaiTokenizer.RES_PAD = 0
-HcgaiTokenizer.RES_UNK = 1
-HcgaiTokenizer.RES_START = 2
-HcgaiTokenizer.RES_STOP = 3
+Ft4Tokenizer = BpeTokenizer.from_csv('src/ft4/pipeline/tokens.v01.csv')
+Ft4Tokenizer.RES_PAD = 0
+Ft4Tokenizer.RES_UNK = 1
+Ft4Tokenizer.RES_START = 2
+Ft4Tokenizer.RES_STOP = 3
 

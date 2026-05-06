@@ -6,8 +6,8 @@ from torch.utils.data import DataLoader
 import lightning as L
 import datasets
 
-from hardcoregenai.pipeline.bpe_tokenizer import HcgaiTokenizer
-from hardcoregenai.pipeline.binpack import binpack
+from ft4.pipeline.bpe_tokenizer import Ft4Tokenizer
+from ft4.pipeline.binpack import binpack
 
 # TODO Remove the bos/eos params; instead, take them from the tokenizer
 # TODO Changing the `tokens.csv` should invalidate the cache. Perhaps add the md5(tokens.csv) to the fingerprint.
@@ -43,7 +43,7 @@ class StoriesDataModule(L.LightningDataModule):
         self.story_datasets = datasets.load_dataset(self.DATASET_ID, split=splits[self.data_size], num_proc=self.num_proc)
 
     def setup(self, stage):
-        tokenizer_fn = functools.partial(_tokenize, bos_token_id=HcgaiTokenizer.RES_START, eos_token_id=HcgaiTokenizer.RES_STOP, tokenizer=HcgaiTokenizer)
+        tokenizer_fn = functools.partial(_tokenize, bos_token_id=Ft4Tokenizer.RES_START, eos_token_id=Ft4Tokenizer.RES_STOP, tokenizer=Ft4Tokenizer)
         tokenized = self.story_datasets.map(function=tokenizer_fn, input_columns=['story'], batched=False, remove_columns=self.story_datasets['train'].column_names, desc='Tokenizing', num_proc=self.num_proc) # type:ignore
 
         # Simple implementation of https://www.amazon.science/blog/improving-llm-pretraining-with-better-data-organization
@@ -109,8 +109,8 @@ if __name__ == '__main__' and True:
         torch.set_printoptions(threshold=3)  # show a few tokens at each end
         print(f"     batch['tokens']=\n{batch['tokens']}")
 
-        print(f'\n## Tokens map words, or word fragments, to integers:\n     {HcgaiTokenizer.tokenize("the")=}\n     {HcgaiTokenizer.detokenize([4161])=}')
-        print(f'\n## Metatokens such as PAD ({HcgaiTokenizer.RES_PAD}), which indicates padding, \n## or BOS ({HcgaiTokenizer.RES_START}), which indicates "beginning of sequence", are reserved.')
+        print(f'\n## Tokens map words, or word fragments, to integers:\n     {Ft4Tokenizer.tokenize("the")=}\n     {Ft4Tokenizer.detokenize([4161])=}')
+        print(f'\n## Metatokens such as PAD ({Ft4Tokenizer.RES_PAD}), which indicates padding, \n## or BOS ({Ft4Tokenizer.RES_START}), which indicates "beginning of sequence", are reserved.')
         print('## Our tokenizer ensures that *each* sequence is a full L tokens. \n## Other tokenizers use a special PAD token to do this.\n')
 
         print("## Sequences and batches are shuffled for best performance, \n## so batch[0] could be a sequence of L tokens *anywhere* in the dataset.\n")
@@ -118,7 +118,7 @@ if __name__ == '__main__' and True:
         print(f"## Here's the first 16 tokens of the first seq of our first batch:")
         print(f'      {batch["tokens"][0,0:16]=}')
         print('## We can roundtrip tokens back to text:')
-        print(f'{HcgaiTokenizer.detokenize(batch["tokens"][0,0:16])=}')
+        print(f'{Ft4Tokenizer.detokenize(batch["tokens"][0,0:16])=}')
         break # break after first batch, enough for this demo
 
     print('\n# Experiment with StoriesDataModule until you are comfortable using it.')

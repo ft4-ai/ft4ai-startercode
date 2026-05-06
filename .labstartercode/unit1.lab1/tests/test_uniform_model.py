@@ -1,6 +1,6 @@
 import pytest
 import torch
-from hardcoregenai.models.uniform_model import UniformModel
+from ft4.models.uniform_model import UniformModel
 
 @pytest.mark.lab("unit1.lab1")
 def test_forward_shape():

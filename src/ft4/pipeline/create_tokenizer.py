@@ -1,6 +1,6 @@
 from datasets import load_dataset
 
-from hardcoregenai.pipeline.bpe_token_learner import BpeTokenLearner
+from ft4.pipeline.bpe_token_learner import BpeTokenLearner
 
 TOKENS_CSV_FILE = None # Set this to the file of your choice
 N_STORIES_TO_TRAIN = 100_000 # BPE is slow and RAM hungry, so be careful how high you set this

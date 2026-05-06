@@ -6,9 +6,9 @@ import lightning as L
 from lightning.pytorch.callbacks import ModelCheckpoint, RichProgressBar, TQDMProgressBar
 from lightning.pytorch.loggers import CSVLogger
 
-from hardcoregenai.models.empirical_model import EmpiricalModel
-from hardcoregenai.app.language_model import LangGen
-from hardcoregenai.pipeline.stories_data_module import StoriesDataModule
+from ft4.models.empirical_model import EmpiricalModel
+from ft4.app.language_model import LangGen
+from ft4.pipeline.stories_data_module import StoriesDataModule
 
 # TODO Add an option to load a saved ckpt and skip training
 

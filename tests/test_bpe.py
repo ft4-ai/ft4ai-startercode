@@ -1,8 +1,8 @@
 import pytest
 import unicodedata
 
-from hardcoregenai.pipeline.bpe_tokenizer import BpeTokenizer
-from hardcoregenai.pipeline.bpe_token_learner import BpeTokenLearner
+from ft4.pipeline.bpe_tokenizer import BpeTokenizer
+from ft4.pipeline.bpe_token_learner import BpeTokenLearner
 
 
 TEXTS = []

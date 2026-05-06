@@ -1,6 +1,6 @@
 import pytest
 
-from hardcoregenai.pipeline.binpack import binpack
+from ft4.pipeline.binpack import binpack
 
 def test_best_fit_first_and_stable_sort():
     batch = [[1], [2,3], [4,5,6], [7,8], [9], [10], [11, 12], [13]]

@@ -7,7 +7,7 @@ import gc
 import heapdict
 import tqdm
 
-from hardcoregenai.pipeline.bpe_tokenizer import BpeTokenizer
+from ft4.pipeline.bpe_tokenizer import BpeTokenizer
 
 class BpeTokenLearner:
     """

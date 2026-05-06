@@ -5,7 +5,7 @@
 import torch
 from torch import Tensor
 import torch.nn as nn
-from hardcoregenai.pipeline.bpe_tokenizer import HcgaiTokenizer
+from ft4.pipeline.bpe_tokenizer import Ft4Tokenizer
 
 class UniformModel(nn.Module):
     """
@@ -15,7 +15,7 @@ class UniformModel(nn.Module):
     and hence has *no* predictive value. But it's a great way to get started, 
     and smoke tests the pipeline end-to-end.
     """
-    def __init__(self, vocab_size=HcgaiTokenizer.last_tid+1):
+    def __init__(self, vocab_size=Ft4Tokenizer.last_tid+1):
         super().__init__()
         self.vocab_size = vocab_size
         self.device = None
@@ -42,7 +42,7 @@ class UniformModel(nn.Module):
 
 if __name__ == "__main__":
     import sys
-    from hardcoregenai.app.language_model import LangGen
+    from ft4.app.language_model import LangGen
     
     model = UniformModel()
     PROMPT = 'Now, she wondered if'

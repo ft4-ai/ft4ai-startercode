@@ -1,7 +1,7 @@
 # TODO Support batch sizes
 
-from hardcoregenai.pipeline.bpe_tokenizer import HcgaiTokenizer
-from hardcoregenai.models.uniform_model import UniformModel
+from ft4.pipeline.bpe_tokenizer import Ft4Tokenizer
+from ft4.models.uniform_model import UniformModel
 
 from typing import Optional
 import torch
@@ -12,7 +12,7 @@ class LangGen():
     def __init__(self, model, tokenizer=None, initial_txt: str='', max_to_generate: int=128, top_k: int=0, top_p: float=0.0, temperature: float=1.0):
         self.model = model # TODO
         if tokenizer is None:
-            tokenizer = HcgaiTokenizer
+            tokenizer = Ft4Tokenizer
         self.max_to_generate = max_to_generate
         self.tokenizer = tokenizer
         self.top_k = top_k
@@ -64,8 +64,8 @@ class LangGen():
         # TODO Add min-p
 
         # Never generate PAD or BOS
-        logits[..., HcgaiTokenizer.RES_PAD] = float("-inf")
-        logits[..., HcgaiTokenizer.RES_START] = float("-inf") # TODO Rename to BOS
+        logits[..., Ft4Tokenizer.RES_PAD] = float("-inf")
+        logits[..., Ft4Tokenizer.RES_START] = float("-inf") # TODO Rename to BOS
         
         if len(logits.shape) == 3:
             # TODO PERFORMANCE This could be made much faster if we used the cache hidden state as opposed to
@@ -110,7 +110,7 @@ class LangGen():
     @classmethod
     def main(cls):
         prompt = sys.stdin.read()
-        response = cls(model=UniformModel(start=8, stop=HcgaiTokenizer.last_tid+1), initial_txt=prompt)
+        response = cls(model=UniformModel(start=8, stop=Ft4Tokenizer.last_tid+1), initial_txt=prompt)
         sys.stdout.write(cls.bold(prompt.rstrip()))
         sys.stdout.flush()
         for txt in response:

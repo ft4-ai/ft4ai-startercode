@@ -3,7 +3,7 @@ import logging
 import torch
 import lightning as L
 
-from hardcoregenai.models.iris import IrisClassifier, IrisDataModule
+from ft4.models.iris import IrisClassifier, IrisDataModule
 
 L.seed_everything(42)
 for name in ["lightning", "lightning.pytorch", "lightning.pytorch.utilities.rank_zero", "lightning.pytorch.accelerators.cuda"]:

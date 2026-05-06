@@ -1,8 +1,8 @@
-# HardCoreGenAI
+# From Tensors to Turing Tests
 
-![HardCoreGenAI](doc/img/HardCoreGenAI_logo.jpg)
+![From Tensors to Turing Tests](doc/img/ft4ai_logo.jpg)
 
-HardCoreGenAI teaches generative AI and LLMs, theory and practice, using a series of hands on guided 
+**From Tensors to Turing Tests** (ft4.ai) teaches generative AI and LLMs, theory and practice, using a series of hands on guided 
 activities called labs. This repo contains the tools and starter code you will use. After you've cloned 
 this repo, you should [install](#install) and [verify](#verify) your environment as described below, and 
 then [start the first lab](#start-the-labs).
@@ -130,7 +130,7 @@ $ pytest --only-lab         # Run tests for this lab only
 $ grep -r 'TODO-LAB' src    # Finds code for you to write
 ```
 
-The course and lab guides are at TODO_HCGAI_WEBSITE_OR_GITHUB_REPO.
+The course and lab guides are at https://ft4.ai.
 
 ---
 

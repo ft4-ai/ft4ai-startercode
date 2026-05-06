@@ -6,13 +6,13 @@ import torch.nn.functional as F
 import lightning as L
 import msgpack
 
-from hardcoregenai.pipeline.bpe_tokenizer import HcgaiTokenizer
+from ft4.pipeline.bpe_tokenizer import Ft4Tokenizer
 
 class EmpiricalModel(L.LightningModule):
     def __init__(
         self,
         n: int = 3,
-        vocab_size: int = HcgaiTokenizer.vocab_size(),
+        vocab_size: int = Ft4Tokenizer.vocab_size(),
         min_distinct_suffixes: int = 4,
         smoothing: float = 0,
         val_smoothing: float = 1e-1
@@ -59,7 +59,7 @@ class EmpiricalModel(L.LightningModule):
         
         self._validating = False
         """_validating: Are we currently validating?"""
-        self._padding_token = HcgaiTokenizer.RES_PAD
+        self._padding_token = Ft4Tokenizer.RES_PAD
         """_padding_token: The token used for padding"""
         self.automatic_optimization = False
 
