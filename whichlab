@@ -1,0 +1,103 @@
+#!/usr/bin/env python3
+"""
+whichlab: report the current and next lab
+
+Usage:
+  whichlab             # prints "Current Lab: ..." and "Next Lab: ..."
+  whichlab --current   # prints just the current lab name
+  whichlab --help      # prints help
+"""
+
+import argparse
+import sys
+import re
+from pathlib import Path
+
+ROOT = Path.cwd()
+STARTER = ROOT / ".labstartercode"
+LEDGER = ROOT / ".labs_started"
+
+def main():
+    ap = argparse.ArgumentParser(add_help=False)
+    ap.add_argument("-c", "--current", action="store_true")
+    ap.add_argument("-h", "--help", action="store_true", help="Show this help and exit")
+    args, _ = ap.parse_known_args()
+    if args.help:
+        print(
+            "whichlab: report the current and next lab\n\n"
+            "Usage:\n"
+            "  whichlab                 # prints \"Current Lab: ...\" and \"Next Lab: ...\"\n"
+            "  whichlab -c|--current    # prints current lab name\n"
+            "  whichlab -h|--help\n"
+        )
+        sys.exit(0)
+
+    # Ensure we’re in project root (presence of .labstartercode)
+    if not STARTER.is_dir():
+        error(f"{STARTER} not found. Run from the project root.")
+
+    current = read_current_lab()
+    all_labs = list_all_labs()
+    started = read_started_set()
+    next_lab = compute_next_lab(all_labs, started)
+
+    if args.current:
+        if current is None:
+            print("None")
+            sys.exit(1)
+        print(current)
+        sys.exit(0)
+
+    # Full report mode
+    if current is None:
+        print("Current Lab: No lab started. Run `./startnextlab`.")
+    else:
+        print(f"Current Lab: {current}")
+
+    if next_lab is None:
+        print("Next Lab: No more labs available locally. Try `git pull` to pull new ones.")
+    else:
+        print(f"Next Lab: {next_lab}")
+
+def error(msg: str, code: int = 1) -> None:
+    print(f"ERROR: {msg}")
+    sys.exit(code)
+
+def read_current_lab() -> str | None:
+    if not LEDGER.exists():
+        return None
+    lines = [ln.strip() for ln in LEDGER.read_text().splitlines() if ln.strip()]
+    return lines[-1] if lines else None
+
+_lab_re = re.compile(r"^unit(\d+)\.lab(\d+)$")
+
+def lab_sort_key(name: str):
+    m = _lab_re.match(name)
+    if m:
+        return (int(m.group(1)), int(m.group(2)), name)
+    # Fallback: extract any numbers, else lexicographic
+    nums = re.findall(r"\d+", name)
+    if nums:
+        return tuple(int(n) for n in nums) + (name,)
+    return (float("inf"), float("inf"), name)
+
+def list_all_labs() -> list[str]:
+    if not STARTER.is_dir():
+        error(f"{STARTER} not found. Run from the project root.")
+    labs = [d.name for d in STARTER.iterdir() if d.is_dir()]
+    return sorted(labs, key=lab_sort_key)
+
+def read_started_set() -> set[str]:
+    if not LEDGER.exists():
+        return set()
+    return {ln.strip() for ln in LEDGER.read_text().splitlines() if ln.strip()}
+
+def compute_next_lab(all_labs: list[str], started: set[str]) -> str | None:
+    for lab in all_labs:
+        if lab not in started:
+            return lab
+    return None
+
+
+if __name__ == "__main__":
+    main()
