@@ -8,25 +8,30 @@ import msgpack
 
 from ft4.pipeline.bpe_tokenizer import Ft4Tokenizer
 
+# Train this model: ft4 train path/to/model.py
+# Then generate:    ft4 generate path/to/model.py
+# See mlops/README.md.
 class EmpiricalModel(L.LightningModule):
+    # Learns by counting n-grams — no gradients, no optimizer. (Later models
+    # in the course are gradient-trained; this flag marks the difference.)
+    has_optimizer = False
+    
     def __init__(
         self,
         n: int = 3,
         vocab_size: int = Ft4Tokenizer.vocab_size(),
         min_distinct_suffixes: int = 4,
         smoothing: float = 0,
-        val_smoothing: float = 1e-1
     ):
         """
-        EmpiricalModel predicts the next token according to the empirical probability, 
+        EmpiricalModel predicts the next token according to the empirical probability,
         conditioned on the previous n-1 tokens.
 
-        n:                     The context window (cw) used for prediction is n - 1.
+        n:                     The context window (w) used for prediction is n - 1.
         vocab_size:            Size of vocabulary.
         min_distinct_suffixes: Prune all prefixes that weren't observed with at least min_distinct_suffixes.
                                (Avoids "reciting from memory".)
         smoothing:             Probability that we predict a suffix that we've *never* observed.
-        val_smoothing:         Smoothing used for computing cross-entropy during validation.
         """
         super().__init__()
         self.save_hyperparameters()
@@ -34,31 +39,28 @@ class EmpiricalModel(L.LightningModule):
         self.n = int(n)
         self.cw = self.n - 1
         """cw (context window): The number of preceding tokens we condition on to predict the next one"""
-        
+
         self.vocab_size = vocab_size
         assert (self.vocab_size ** self.cw) <= (2**63 - 1), f'{n=} is too big for {vocab_size=} (must encode to < 64 bits)'
         self.min_distinct_suffixes = min_distinct_suffixes
         self.smoothing_alpha = smoothing / vocab_size
-        self.val_smoothing_alpha = val_smoothing / vocab_size
 
         self.ngram_counts: defaultdict[int, Counter] = defaultdict(Counter)
         """
         ngram_counts: A dict of the form {prefix -> {suffix -> count}}
-        
-        Usage: 
-               self.prefix_suffix_freq[prefix][suffix]     
+
+        Usage:
+               self.prefix_suffix_freq[prefix][suffix]
                # How many times does suffix occur after prefix?
 
-        Observed ngrams are split up into prefix (cw tokens) and suffix (the last token). 
+        Observed ngrams are split up into prefix (cw tokens) and suffix (the last token).
         When predicting, we can query by prefix alone or by (prefix, suffix).
 
         For performance, the entire prefix is encoded as a single int64.
 
         (Using a dict is atypical for PyTorch, but necessary for empirical counts.)
         """
-        
-        self._validating = False
-        """_validating: Are we currently validating?"""
+
         self._padding_token = Ft4Tokenizer.RES_PAD
         """_padding_token: The token used for padding"""
         self.automatic_optimization = False
@@ -75,20 +77,18 @@ class EmpiricalModel(L.LightningModule):
          L = tokens per sequence
          V = vocab size
         """
-        freq = self._suffix_freq(tokens)
-        logits = self._freq2logits(freq)
-
-        # If all logits for a particular (b,l) are -inf (i.e. we've never seen this prefix at all),
-        # set them all to 0 (uniform).
-        mask_all_neginf = torch.isneginf(logits).all(dim=-1, keepdim=True)
-        logits[mask_all_neginf.expand_as(logits)] = 0
-        
-        return logits
+        return self._freq2logits(self._suffix_freq(tokens))
 
     def _freq2logits(self, freq: Tensor) -> Tensor:
         """
         Transforms a tensor of frequencies (counts) to logits.
         """
+        # Tiny clamp so log(0) doesn't produce -inf for unseen targets.
+        # Below float32 precision relative to any real count, so it doesn't shift
+        # observed-count logits; unseen targets get a finite, large-negative logit.
+        # When an entire row is zero (prefix never seen), all logits become equal
+        # and softmax is uniform — exactly what we want.
+        freq = freq.clamp_min(1e-12)
         # Determine the logits
         # Hint: This can be done very easily (a single line of code).
         logits = None # TODO-LAB unit1.lab1
@@ -153,10 +153,9 @@ class EmpiricalModel(L.LightningModule):
                     freqs[b, i, suffix_ids] = suffix_counts
                 prefix -= int(seq[i]) * base_multiplier                   # pop left
 
-        # alpha, if > 0, is a form of additive smoothing, added to each count
+        # smoothing_alpha, if > 0, is a form of additive smoothing, added to each count
         # See https://en.wikipedia.org/wiki/Additive_smoothing
-        alpha = self.val_smoothing_alpha if self._validating else self.smoothing_alpha
-        freqs.add_(float(alpha))
+        freqs.add_(float(self.smoothing_alpha))
 
         return freqs
 
@@ -205,31 +204,30 @@ class EmpiricalModel(L.LightningModule):
         #   cnt[j]           is its count
 
         # Merge into ngram_counts
-        uniq_pairs = uniq_pairs.cpu().numpy()
-        cnt = cnt.cpu().numpy()
+        #uniq_pairs = uniq_pairs.cpu().numpy()
+        #cnt = cnt.cpu().numpy()
+        #for (pfx, sfx), c in zip(uniq_pairs, cnt):
+        #    self.ngram_counts[int(pfx)][int(sfx)] += int(c)
+        # The version below may perform faster:
+        uniq_pairs = uniq_pairs.cpu().tolist()
+        cnt = cnt.cpu().tolist()
         for (pfx, sfx), c in zip(uniq_pairs, cnt):
-            self.ngram_counts[int(pfx)][int(sfx)] += int(c)
+            self.ngram_counts[pfx][sfx] += c
+        
     
     def validation_step(self, batch):
-        assert self._validating
         tokens = batch['tokens'] # shape: (B, L+1)
         x = tokens[..., :-1] # shape: (B, L) x[b][i] is the token id at pos i (in batch b)
         y = tokens[..., 1:] # shape: (B, L)  y[b][i] is the token id at pos i+1 (and thus the target for pos i)
         logits = self(x) # shape: (B, L, V)
-        
+
         logits_ = logits.flatten(start_dim=0, end_dim=1) # shape: (B*L, V)
         y_ = y.flatten() # shape: (B*L,)
         loss = F.cross_entropy(input=logits_, target=y_, ignore_index=self._padding_token)
 
-        self.log("val_ce", loss, prog_bar=True, logger=True)
-        
+        self.log("val_loss", loss, prog_bar=True, logger=True)
+
         return loss
-
-    def on_validation_start(self):
-        self._validating = True
-
-    def on_validation_end(self):
-        self._validating = False
 
     def _pruned_prefix_suffix_freq(self) -> dict[int, dict[int, int]]:
         """

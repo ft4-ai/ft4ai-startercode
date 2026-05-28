@@ -1,0 +1,36 @@
+# neural_ngram.yaml — config for neural_ngram.py
+#
+# Overrides `defaults.yaml`.
+#
+# For tweaks you don't want to commit, drop them in `neural_ngram.local.yaml` (gitignored).
+#
+# You can also config on the command line:
+#     ft4 train path/to/neural_ngram.py --model.n=4 --model.dim=64
+#
+# CPU Note: From this point on, if you are using a CPU, you will need to
+# tune accordingly. Your results may be modest, but you'll still validate
+# the architecture.
+#
+# TODO-LAB unit1.lab2: Tune the hyperparameters!
+#
+# It's usually best to start with small values, get the model working,
+# then tune for maximum performance.
+model:
+  n: !TODO-LAB unit1.lab2       # n defines the fundamental behavior of a NeuralNgram
+  dim: !TODO-LAB unit1.lab2     # For a fixed n, dim is by far the most important hyperparameter
+  depth: !TODO-LAB unit1.lab2   # depth should generally be 1/50 to 1/100 the size of dim
+  expansion_factor: 4
+  lr: 3.0e-4 !TODO-LAB unit1.lab2  # Experiment with different values of the learning rate
+  warmup_steps: 3000
+
+data:
+  class_path: ft4.pipeline.stories_data_module.StoriesDataModule
+  init_args:
+    seq_len: 128
+    # Tune batch size
+    batch_size: 64
+    data_size: !TODO-LAB unit1.lab2 # Start with 'small', then go to 'medium' or 'full'
+
+trainer:
+  max_epochs: 10
+  gradient_clip_val: 1.0

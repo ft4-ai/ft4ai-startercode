@@ -10,63 +10,83 @@ version = "0.3.0"
 requires-python = ">=3.10"
 dependencies = [
   # PyTorch and Lightning are selected via an "extra":
-  # uv sync --extra torch-cu128              # For CUDA 12.*
+  # uv sync --extra torch-cu126              # For CUDA 12.*
   # uv sync --extra torch-cpu                # For CPU
   # uv sync --extra torch-external --inexact # For already installed torch (outside of uv)
-
-  "jsonargparse[signatures]>=4.41.0, <5.0.0", # Used by LightningArgumentParser
-  "datasets>=4.0.0, <5.0.0", # HuggingFace datasets
+  "jsonargparse[signatures]>=4.48.0, <4.49.0", # Used by LightningArgumentParser
+  "datasets>=4.8.5,<4.9.0", # HuggingFace datasets
   "heapdict>=1.0.1, <1.1.0", # Used by tokenizer
-  "tqdm>=4.67.1, <5.0.0", # Progress bar
-  "rich>=14.1.0, <15.0.0", # Rich progress bar
-  "msgpack>=1.1.1, <1.2.0", # Serialize empirical model efficiently
+  "tqdm>=4.67.3, <4.68.0", # Progress bar
+  "rich>=15.0.0, <15.1.0", # Rich progress bar
+  "rich-argparse>=1.8.0, <1.9.0", # Colored argparse help
+  "msgpack>=1.1.2, <1.2.0", # Serialize empirical model efficiently
 ]
+
+[project.scripts]
+ft4 = "mlops.main:main"
 
 [project.optional-dependencies]
 # Choose exactly ONE of these:
 torch-cpu = [
-  "torch>=2.8.0, <2.9.0",
-  "lightning>=2.5.4,<2.6.0",
+  "torch>=2.11.0, <2.12.0",
+  "lightning==2.6.1",
 ]
-torch-cu128 = [
-  "torch>=2.8.0, <2.9.0",
-  "lightning>=2.5.4,<2.6.0",
+torch-cu126 = [
+  "torch>=2.11.0, <2.12.0",
+  "lightning==2.6.1",
 ]
+
 # For clusters / IT-managed installs using system torch:
 torch-external = [
-  "lightning>=2.5.4,<2.6.0"   # no torch here; use system torch
+  "lightning==2.6.1"   # no torch here; use system torch
 ]
-[tool.uv]
-# Don’t allow mixing different backends
-conflicts = [
-  [{extra="torch-cpu"},     {extra="torch-cu128"}],
-  [{extra="torch-external"},{extra="torch-cpu"}],
-  [{extra="torch-external"},{extra="torch-cu128"}],
-]
+
 # Route torch to the right PyTorch index only when that extra is selected
 [tool.uv.sources]
 torch = [
   { index = "pytorch-cpu",   extra = "torch-cpu" },
-  { index = "pytorch-cu128", extra = "torch-cu128", marker = "sys_platform == 'linux' or sys_platform == 'win32'" },
+  { index = "pytorch-cu126", extra = "torch-cu126", marker = "sys_platform == 'linux' or sys_platform == 'win32'" },
 ]
+
 # Define the PyTorch indexes
 [[tool.uv.index]]
 name = "pytorch-cpu"
 url  = "https://download.pytorch.org/whl/cpu"
 explicit = true
+
 [[tool.uv.index]]
-name = "pytorch-cu128"
-url  = "https://download.pytorch.org/whl/cu128"
+name = "pytorch-cu126"
+url  = "https://download.pytorch.org/whl/cu126"
 explicit = true
+
+[tool.uv]
+# Don't allow mixing different backends
+conflicts = [
+  [{extra="torch-cpu"},      {extra="torch-cu126"}],
+  [{extra="torch-external"}, {extra="torch-cpu"}],
+  [{extra="torch-external"}, {extra="torch-cu126"}],
+]
+# Add a cooling off period, for security
+exclude-newer = "14 days"
+required-version = ">=0.10.0"
 
 [dependency-groups]
 dev = [
-    "pytest>=8.4.2, <9.0.0",
-    "pytest-watcher>=0.4.3",
+    "pytest>=9.0.3, <9.1.0",
+    "pytest-watcher>=0.6.3, <0.7.0",
 ]
 
+# Package discovery — ft4 lives in src/, mlops lives in mlops/src/
 [tool.setuptools.packages.find]
-where = ["src"]
+where    = ["src", "mlops/src"]
+include  = ["ft4*", "mlops*"]
+
+# Package data — the defaults.yaml ships with the package
+[tool.setuptools.package-data]
+mlops = ["*.yaml"]
+
+[tool.setuptools]
+script-files = ["startnextlab", "whichlab"]
 
 [tool.pyright]
 reportAttributeAccessIssue = false
@@ -74,8 +94,9 @@ reportAttributeAccessIssue = false
 [tool.pytest.ini_options]
 markers = [
     "lab(name): test tied to a specific lab (e.g. 'unit1.lab1')",
-    "needs_checkpoint: requires a pre-trained checkpoint on disk"
+    "needs_checkpoint(model_stem): requires a saved model checkpoint"
 ]
 testpaths = ["tests"]
+# mlops/tests/ is run separately (uv run pytest mlops); not included here.
+#testpaths = ["tests", "mlops/tests"]
 addopts = "--ignore=attic/"
-   

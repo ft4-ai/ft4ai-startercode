@@ -12,6 +12,7 @@ pytest --only-lab unit1.lab2
 pytest --upto-lab unit1.lab2
 """
 
+import os
 import re
 import subprocess
 import warnings
@@ -19,6 +20,14 @@ from typing import Iterable, Optional, Tuple, List, Set
 
 import pytest
 from _pytest.warning_types import PytestWarning
+
+from test_helpers import find_checkpoint
+
+# Tests must never reach wandb. Set the mode *before* any wandb import so
+# every subprocess we spawn inherits it. wandb is opt-in via --wandb, so
+# tests that don't pass that flag never reach the network anyway — this is
+# the belt-and-suspenders for any test that exercises the wandb path.
+os.environ.setdefault("WANDB_MODE", "disabled")
 
 _LAB_RE = re.compile(r"^unit(\d+)\.lab(\d+)$")
 _AUTO = "__AUTO__"  # sentinel when flag provided with no value
@@ -48,6 +57,13 @@ def pytest_addoption(parser):
         default=None,
         help=("Run all tests up to and including the specified lab (or current lab if none specified). "
               "Examples: '--upto-lab' (current lab), '--upto-lab unit1.lab1'")
+    )
+    parser.addoption(
+        "--skip-checkpoint-tests",
+        action="store_true",
+        default=False,
+        help=("Skip tests that require a trained checkpoint instead of failing them. "
+              "Also enabled via FT4_SKIP_CHECKPOINT_TESTS=1.")
     )
 
 
@@ -122,6 +138,16 @@ def _write_line(config, msg: str) -> None:
 def pytest_configure(config):
     only_arg = config.getoption("--only-lab")   # None | _AUTO | "ids"
     upto_arg = config.getoption("--upto-lab")   # None | _AUTO | "ids"
+
+    # Checkpoint-test skip banner + warning. Done first so it always fires, even when no
+    # --only-lab / --upto-lab flag is present (which short-circuits below).
+    if _checkpoint_tests_skipped(config):
+        msg = ("Checkpoint tests (of trained models) were be skipped. "
+               "Train model with `ft4 train` and remove --skip-checkpoint-tests to run them.")
+        _write_line(config, msg)
+        # issue_config_time_warning routes into pytest's end-of-session warnings summary
+        # (rather than Python's default warnings handler that prints immediately).
+        config.issue_config_time_warning(PytestWarning(msg), stacklevel=2)
 
     # Mutually exclusive
     if (only_arg is not None) and (upto_arg is not None):
@@ -199,14 +225,21 @@ def pytest_configure(config):
         _write_line(config, f"Running tests up to {_format_lab_tuple(upto_latest)} (later labs deselected)")
 
 
+def _checkpoint_tests_skipped(config) -> bool:
+    """True if checkpoint tests should skip (rather than fail) when no checkpoint exists."""
+    return bool(config.getoption("--skip-checkpoint-tests")) or \
+           os.getenv("FT4_SKIP_CHECKPOINT_TESTS") == "1"
+
+
 # --------------------------- Collection filtering ----------------------
 
 def pytest_collection_modifyitems(config, items):
     only_ids: Optional[Set[str]] = getattr(config, "_lab_only_ids", None)
     upto_latest: Optional[Tuple[int, int]] = getattr(config, "_lab_upto_latest", None)
 
-    # No selection flags -> nothing to do
+    # No selection flags -> no lab filtering, but still run the missing-checkpoint banner below.
     if only_ids is None and upto_latest is None:
+        _maybe_emit_missing_checkpoint_banner(config, items)
         return
 
     deselected: List[pytest.Item] = []
@@ -260,3 +293,70 @@ def pytest_collection_modifyitems(config, items):
     if deselected:
         config.hook.pytest_deselected(items=deselected)
         items[:] = kept
+
+    # Detect missing checkpoints once, up front, and emit a single grouped banner.
+    # Per-test failures stay terse ("No checkpoint for 'X'") so the short summary is readable
+    # even with many parametrized cases.
+    _maybe_emit_missing_checkpoint_banner(config, items)
+
+
+def _maybe_emit_missing_checkpoint_banner(config, items) -> None:
+    if _checkpoint_tests_skipped(config):
+        return  # the skip-tests warning already covers this case
+    missing: Set[str] = set()
+    for item in items:
+        marker = item.get_closest_marker("needs_checkpoint")
+        if marker is None or not marker.args:
+            continue
+        model_stem = str(marker.args[0])
+        if find_checkpoint(model_stem) is None:
+            missing.add(model_stem)
+    if not missing:
+        return
+    stems = sorted(missing)
+    train_lines = "\n".join(f"  ft4 train src/ft4/models/{s}.py" for s in stems)
+    banner = (
+        f"Missing checkpoints for: {', '.join(stems)}. Train with:\n"
+        f"{train_lines}\n"
+        f"Or rerun pytest with --skip-checkpoint-tests to skip these tests."
+    )
+    _write_line(config, banner)
+
+
+# ---------------------------- Checkpoint fixture ----------------------------
+
+@pytest.fixture
+def require_checkpoint(request):
+    """Resolve a checkpoint path or fail (or skip, with the opt-out flag).
+
+    The model_stem is read from the test's `@pytest.mark.needs_checkpoint('<stem>')`
+    marker if not passed explicitly. The marker form is preferred because it lets us
+    detect all missing checkpoints once at collection time and emit a single grouped banner.
+
+    Usage:
+        @pytest.mark.needs_checkpoint("neural_ngram")
+        def test_something(require_checkpoint):
+            ckpt = require_checkpoint()
+            model = load_ckpt_cpu(ckpt, NeuralNgram)
+    """
+    def _get(model_stem: str | None = None) -> str:
+        if model_stem is None:
+            marker = request.node.get_closest_marker("needs_checkpoint")
+            if marker and marker.args:
+                model_stem = str(marker.args[0])
+        if model_stem is None:
+            raise pytest.UsageError(
+                "require_checkpoint() called without a model_stem and the test has no "
+                "@pytest.mark.needs_checkpoint('<model_stem>') marker."
+            )
+        ckpt = find_checkpoint(model_stem)
+        if ckpt is None:
+            # Short, single-line message: the detailed `ft4 train ...` instructions live in
+            # the collection-time banner so they aren't repeated per parametrized case.
+            short = f"No checkpoint for {model_stem!r}: train via `ft4 train` or `--skip-checkpoint-tests`"
+            if _checkpoint_tests_skipped(request.config):
+                pytest.skip(short)
+            else:
+                pytest.fail(short)
+        return ckpt
+    return _get

@@ -1,0 +1,45 @@
+# empirical_model.yaml — config for empirical_model.py.
+#
+# Overrides defaults.yaml.
+#
+# For tweaks you don't want to comit, drop them in empirical_model.local.yaml (gitignored).
+#
+# EmpiricalModel is counts-based, with no gradients and no GPU benefit:
+#   - training_step just counts n-grams (token-index ops, scales fine at large B)
+#   - forward (used by validation + sampling) allocates a (B, L, V) tensor,
+#     so it's memory-hungry at large B
+# So we use a large train batch_size and a small val_batch_size, and CPU.
+# A single pass over the data suffices, so max_epochs=1.
+#
+# Train
+#   ft4 train src/ft4/models/empirical_model.py
+#
+# TODO-LAB unit1.lab1 — things to experiment with:
+#   - n: try 2, 3, 4, 5 (higher n needs more data; with `medium` data, n=3 or 4
+#     is the sweet spot — n=5 will mostly fall back to unseen prefixes)
+#   - data_size: bump to `full` once your iteration loop feels good; samples
+#     get noticeably more coherent with more counts
+#   - smoothing: leave at 0 for pure-count generation; bump to ~0.01 to inject
+#     unseen-token noise (samples become more "creative" but less coherent)
+
+model:
+  n: !TODO-LAB unit1.lab1
+  min_distinct_suffixes: 4   # prune prefixes seen with < this many distinct next-tokens
+  smoothing: 0.0             # additive (Laplace) smoothing during generation
+
+data:
+  class_path: ft4.pipeline.stories_data_module.StoriesDataModule
+  init_args:
+    seq_len: 512
+    batch_size: 2048          # training is dict-update-bound; big batches = fewer Python iters
+    val_batch_size: 32        # forward allocates (B, L, V) float32 — keep small to fit in memory
+    data_size: !TODO-LAB unit1.lab1   # `small` for fast dev; then `full` for best results
+
+trainer:
+  accelerator: cpu            # this model's forward is a Python per-position loop; CPU > GPU here
+  max_epochs: 1               # counts accumulate in one pass; no benefit to more epochs
+  precision: 32-true          # no gradients — mixed precision adds nothing, and log(freq) prefers fp32
+  gradient_clip_val: 0        # no gradients to clip
+  limit_val_batches: 8        # 8 × 32 = 256 sequences per val — fast, stable val_ce
+  num_sanity_val_steps: 4     # initial counts are empty; sanity check is uninformative
+  enable_model_summary: false # nothing to summarize — the model has no parameters

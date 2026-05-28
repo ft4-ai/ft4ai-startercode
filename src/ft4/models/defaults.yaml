@@ -1,0 +1,21 @@
+# defaults.yaml — defaults applied to every model unless overridden.
+#
+# Cascade (last wins): ft4.yaml → this file → <model>.yaml → CLI flags.
+# Each may have a sibling .local.yaml (gitignored) for tweaks you don't
+# want to commit.
+trainer:
+  # On most modern GPUs (Ampere and newer: RTX 30/40 series, A100,
+  # H100) bf16-mixed is ~30% faster with no measurable quality cost. 
+  precision: bf16-mixed
+  # On a CPU or older GPUs, or if things act weird, a full 32 bit is safer:
+  # precision: 32-true
+   
+  # Validation is quick and useful. Adjust to taste.
+  # Will also save a checkpoint and generate sample text after each validation.
+  val_check_interval: "00:00:10:00" # Every 10 min (DD:HH:MM:SS)
+  check_val_every_n_epoch: 1 # And at the end of every epoch
+  
+  # UI niceties — flip off if you're piping logs to a file or running in CI.
+  enable_progress_bar: true
+  enable_model_summary: true
+

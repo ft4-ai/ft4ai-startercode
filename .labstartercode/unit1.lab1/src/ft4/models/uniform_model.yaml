@@ -1,0 +1,13 @@
+# UniformModel has no learnable parameters, so this config is minimal.
+
+data:
+  class_path: ft4.pipeline.stories_data_module.StoriesDataModule
+  init_args:
+    seq_len: 300
+    batch_size: 32
+    data_size: small
+
+trainer:
+  max_epochs: 1
+  val_check_interval: 0.1
+

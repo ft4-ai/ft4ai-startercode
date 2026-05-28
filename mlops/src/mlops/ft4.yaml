@@ -1,0 +1,53 @@
+# ft4.yaml — ft4's own operational config (callbacks, logger).
+#
+# You shouldn't need to touch this. They make ft4
+# do its job: save checkpoints, sample during training, render the
+# briefing, record the session.
+#
+# Where things go in the cascade (last wins):
+#   - src/mlops/ft4.yaml            ← this file
+#   - src/mlops/ft4.local.yaml      your machine-wide overrides (gitignored)
+#   - src/ft4/models/defaults.yaml  all-model defaults (precision, etc.)
+#   - <model>.yaml                  per-model config
+#   - command-line flags            override the above
+#
+# Each YAML file may have a sibling `.local.yaml` (gitignored), useful when
+# you want to tweak something without dirtying git.
+
+trainer:
+  logger:
+    class_path: lightning.pytorch.loggers.CSVLogger
+    init_args:
+      save_dir: "runs"
+      name: ""
+      version: ""
+  callbacks:
+    # Lightning's RichProgressBar owns the only Rich Live region.
+    # BriefingPrintCallback prints the briefing once at on_train_start, and
+    # LiveSampleCallback prints each new sample panel after validation —
+    # both via the same global console, so Rich's Live render-hook routes
+    # them above the progress bar (in scrollback) in chronological order.
+    - class_path: lightning.pytorch.callbacks.RichProgressBar
+    - class_path: lightning.pytorch.callbacks.ModelCheckpoint
+      init_args:
+        dirpath: null
+        # `auto_insert_metric_name=false` lets us emit a clean `step_000123`
+        # instead of Lightning's default `step=123`. Zero-padded to 6 so the
+        # files sort lexicographically up to 999,999 steps.
+        filename: "step_{step:06d}_val_{val_loss:.2f}"
+        auto_insert_metric_name: false
+        # Rolling-most-recent snapshot. Cadence is driven by
+        # `trainer.val_check_interval` (see defaults.yaml): 
+        # ModelCheckpoint saves at end of loop.
+        # By default (no `monitor` set), save_top_k=1 keeps only
+        # the most recent file; save_last="link" symlinks last.ckpt to that
+        # file, and `ft4 train` resumes from most-recent.
+        save_last: link
+        save_top_k: 1
+    - class_path: mlops.sample_callback.SampleGenerationCallback
+      init_args:
+        epoch_interval: 1
+        step_interval: 0
+    - class_path: mlops.briefing_print_callback.BriefingPrintCallback
+    - class_path: mlops.live_sample_callback.LiveSampleCallback
+    - class_path: mlops.session_finalization.SessionFinalizationCallback

@@ -89,9 +89,7 @@ def test_validation_ce_is_reasonable(n, vocab_size, corpus):
     model = make_model(n=n, vocab_size=vocab_size)
     train_once(model, train_tokens)
 
-    model.on_validation_start()
     ce = model.validation_step({"tokens": val_tokens})
-    model.on_validation_end()
     # Lightning may return a Tensor or a float; normalize
     ce_val = float(ce.detach().cpu().item() if isinstance(ce, torch.Tensor) else ce)
     assert math.isfinite(ce_val)

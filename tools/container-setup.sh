@@ -15,7 +15,7 @@
 #
 # To set up a *local* Docker container:
 #
-#     docker run -it -v $(pwd)/tools/container-setup.sh:/container-setup.sh -e DEPLOY_PRIVATE_KEY="$(< ~/.ssh/deploy_private_key)" --gpus all pytorch/pytorch:2.8.0-cuda12.9-cudnn9-runtime bash -c 'bash /container-setup.sh; exec bash'
+#     docker run -it -v $(pwd)/tools/container-setup.sh:/container-setup.sh -e DEPLOY_PRIVATE_KEY="$(< ~/.ssh/deploy_private_key)" --gpus all pytorch/pytorch:2.11.0-cuda12.6-cudnn9-runtime bash -c 'bash /container-setup.sh; exec bash'
 #
 # Before running, set your GIT_REPO and configure (below).
 # Of course, customize to taste.
@@ -35,12 +35,20 @@ APT_UPGRADE=true
 #APT_UPGRADE_SECURITY_ONLY=true
 
 # Packages to install
-PKGS="git build-essential openssh-client sudo vim curl wget less nano bash-completion tmux htop bat"
+PKGS="git build-essential openssh-client sudo vim curl wget less nano bash-completion tmux rsync htop bat"
 
-# Files listed here will be persisted from  /home/clouduser/filename to /workspace/home_persistent/filename
+# Files listed here will be persisted from  /home/clouduser/filename to /workspace/home-persistent/filename
 PERSIST_THESE_HOME_FILES=".bash_history"
 
 ###############################################################
+
+# The repo will be synced and run to this dir
+REPO_DIR="/workspace/repo"
+
+# Persistent run artifacts live outside the git working tree.
+# The repo-local runs/ path is symlinked here.
+PERSISTENT_RUNS_DIR="/workspace/runs"
+REPO_RUNS_DIR="$REPO_DIR/runs"
 
 set -euo pipefail
 SETUP_TIMESTAMP="$(date -u '+%Y-%m-%d %H:%M:%S UTC')"
@@ -110,6 +118,14 @@ if [ -f /etc/ssh/sshd_config ]; then
   sed -ri 's/^[#[:space:]]*PermitRootLogin[[:space:]]+.*/PermitRootLogin prohibit-password/' /etc/ssh/sshd_config || echo "PermitRootLogin prohibit-password" >> /etc/ssh/sshd_config
 fi
 
+echo "[*] Reloading sshd"
+if pidof sshd &>/dev/null; then
+  SSHD_MASTER=$(ps -C sshd -o pid=,ppid= | awk '$2==1 { print $1; exit }')
+  if [ -n "$SSHD_MASTER" ]; then
+    kill -HUP "$SSHD_MASTER" || true
+  fi
+fi
+
 echo -e "\n[*] Installing deploy key"
 if [ -n "${DEPLOY_PRIVATE_KEY:-}" ]; then
   echo -e "$DEPLOY_PRIVATE_KEY" > /home/clouduser/.ssh/id_ed25519
@@ -138,29 +154,24 @@ fi
 EOF
 chmod 644 /etc/profile.d/clouduser-path.sh
 
+echo -e "\n[*] Creating workspace directories"
+mkdir -p /workspace/huggingface /workspace/home-persistent "$PERSISTENT_RUNS_DIR"
+chown -R clouduser:clouduser /workspace || chmod a+rwx /workspace
+
 echo -e "\n[*] Symlinking persistent home files"
 for file in $PERSIST_THESE_HOME_FILES; do
-  rm -f /home/clouduser/$file
-  ln -s /workspace/home-persistent/$file /home/clouduser/$file
-  chown -h clouduser:clouduser /home/clouduser/$file
-done
+  touch "/workspace/home-persistent/$file"
+  chown clouduser:clouduser "/workspace/home-persistent/$file"
 
-echo -e "\n[*] Creating workspace directories"
-mkdir -p /workspace/huggingface /workspace/home-persistent /workspace/repo
-chown -R clouduser:clouduser /workspace || chmod a+rwx /workspace
+  rm -f "/home/clouduser/$file"
+  ln -s "/workspace/home-persistent/$file" "/home/clouduser/$file"
+  chown -h clouduser:clouduser "/home/clouduser/$file"
+done
 
 echo -e "\n[*] Setting HF_HOME for all users"
 echo "export HF_HOME=/workspace/huggingface" > /etc/profile.d/hf_home.sh
 chmod 644 /etc/profile.d/hf_home.sh
 
-REPO_DIR="/workspace/repo"
-echo -e "\n[*] Fetching repository"
-if [ -d "$REPO_DIR/.git" ]; then
-  su - clouduser -c "cd $REPO_DIR && git pull"
-else
-  su - clouduser -c "git clone \"$GIT_REPO\" \"$REPO_DIR\""
-  chown -R clouduser:clouduser "$REPO_DIR" 2>/dev/null || chmod a+rwx "$REPO_DIR"
-fi
 
 echo -e "\n[*] Creating ~/.tmux.conf"
 cat > /home/clouduser/.tmux.conf <<EOF
@@ -171,17 +182,6 @@ set -g status off
 EOF
 chown clouduser:clouduser /home/clouduser/.tmux.conf
 chmod 644 /home/clouduser/.tmux.conf
-
-echo -e "\n[*] Appending auto-cd to ~/.bashrc"
-if ! grep -q "AUTO-CD TO REPO" /home/clouduser/.bashrc 2>/dev/null; then
-  sudo -u clouduser bash -c "tee -a /home/clouduser/.bashrc << 'EOF'
-# >> AUTO-CD TO REPO <<
-if [[ \$- == *i* ]]; then
-  cd $REPO_DIR
-fi
-# >> END AUTO-CD TO REPO <<
-EOF"
-fi
 
 echo -e "\n[*] Appending tmux auto-attach to ~/.bashrc"
 if ! grep -q "TMUX ATTACH" /home/clouduser/.bashrc 2>/dev/null; then
@@ -202,6 +202,54 @@ if ! grep -q "ULIMIT SET" /home/clouduser/.bashrc 2>/dev/null; then
 # >> ULIMIT SET <<
 ulimit -n 65536 || true
 # >> END ULIMIT SET <<
+EOF"
+fi
+
+echo -e "\n[*] Fetching repository"
+if [ -d "$REPO_DIR/.git" ]; then
+  su - clouduser -c "cd $REPO_DIR && git pull"
+else
+  su - clouduser -c "git clone \"$GIT_REPO\" \"$REPO_DIR\""
+  chown -R clouduser:clouduser "$REPO_DIR" 2>/dev/null || chmod a+rwx "$REPO_DIR"
+fi
+
+echo -e "\n[*] Linking repo runs directory to persistent workspace storage"
+mkdir -p "$PERSISTENT_RUNS_DIR"
+chown clouduser:clouduser "$PERSISTENT_RUNS_DIR" 2>/dev/null || true
+if [ -L "$REPO_RUNS_DIR" ]; then
+  CURRENT_TARGET="$(readlink "$REPO_RUNS_DIR")"
+  if [ "$CURRENT_TARGET" != "$PERSISTENT_RUNS_DIR" ]; then
+    echo "[!] $REPO_RUNS_DIR is a symlink to $CURRENT_TARGET, expected $PERSISTENT_RUNS_DIR"
+    rm "$REPO_RUNS_DIR"
+    ln -s "$PERSISTENT_RUNS_DIR" "$REPO_RUNS_DIR"
+  fi
+elif [ -e "$REPO_RUNS_DIR" ]; then
+  echo "[*] Existing repo-local runs directory found; migrating contents to $PERSISTENT_RUNS_DIR"
+  cp -a "$REPO_RUNS_DIR"/. "$PERSISTENT_RUNS_DIR"/
+  BACKUP_PATH="${REPO_RUNS_DIR}.migrated.$(date -u +%Y%m%dT%H%M%SZ)"
+  mv "$REPO_RUNS_DIR" "$BACKUP_PATH"
+  ln -s "$PERSISTENT_RUNS_DIR" "$REPO_RUNS_DIR"
+  echo "[*] Moved old repo-local runs directory to $BACKUP_PATH"
+else
+  ln -s "$PERSISTENT_RUNS_DIR" "$REPO_RUNS_DIR"
+fi
+
+chown -h clouduser:clouduser "$REPO_RUNS_DIR"
+chown -R clouduser:clouduser "$PERSISTENT_RUNS_DIR" 2>/dev/null || true
+
+if [ ! -d "$REPO_RUNS_DIR" ]; then
+  echo "[ERROR] $REPO_RUNS_DIR does not resolve to a directory"
+  exit 1
+fi
+
+echo -e "\n[*] Appending auto-cd to ~/.bashrc"
+if ! grep -q "AUTO-CD TO REPO" /home/clouduser/.bashrc 2>/dev/null; then
+  sudo -u clouduser bash -c "tee -a /home/clouduser/.bashrc << 'EOF'
+# >> AUTO-CD TO REPO <<
+if [[ \$- == *i* ]]; then
+  cd $REPO_DIR
+fi
+# >> END AUTO-CD TO REPO <<
 EOF"
 fi
 
@@ -235,14 +283,6 @@ Test status: $(cat /workspace/pytest.status 2>/dev/null || echo "Tests not run")
 Use user 'clouduser' and cd to $REPO_DIR
 
 EOF
-
-echo "[*] Reloading sshd"
-if pidof sshd &>/dev/null; then
-  SSHD_MASTER=$(ps -C sshd -o pid=,ppid= | awk '$2==1 { print $1; exit }')
-  if [ -n "$SSHD_MASTER" ]; then
-    kill -HUP "$SSHD_MASTER" || true
-  fi
-fi
 
 set +x
 echo -e "\n\n[OK] SETUP COMPLETE at $(date -u '+%Y-%m-%d %H:%M:%S UTC') (started at $SETUP_TIMESTAMP)"

@@ -1,0 +1,16 @@
+# iris.yaml — config for iris.py.
+#
+# Overrides `defaults.yaml`.
+#
+# For tweaks you don't want to commit, drop them in `iris.local.yaml` (gitignored).
+#
+# You can also config on the command line:
+#     ft4 train path/to/iris.py --trainer.max_epochs=4
+data:
+  class_path: iris.IrisDataModule
+  init_args:
+    batch_size: 32
+
+trainer:
+  max_epochs: 16
+  log_every_n_steps: 1

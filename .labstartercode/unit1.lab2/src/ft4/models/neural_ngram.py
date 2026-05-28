@@ -10,6 +10,10 @@ import lightning as L
 from ft4.models.mlp import MlpNet
 from ft4.pipeline.bpe_tokenizer import Ft4Tokenizer
 
+
+# Train this model: ft4 train path/to/model.py
+# Then generate:    ft4 generate path/to/model.py
+# See mlops/README.md.
 class NeuralNgram(L.LightningModule):
     def __init__(
             self,
@@ -23,12 +27,12 @@ class NeuralNgram(L.LightningModule):
             padding_idx: int = 0):
         """
         NeuralNgram predicts the next token according to a neural network,
-        conditioned on the previous cw tokens, where cw = n - 1.
+        conditioned on the previous w tokens, where w = n - 1.
 
         At each pos, cw tokens (including the current token) are taken as a lumped input, 
         and used to predict the *next* token.
 
-        n:                     The context window (cw) used for prediction is n - 1.
+        n:                     The context window w used for prediction is n - 1.
         dim:                   Each token is embedded to a vector of `dim` dimensions
                                By far the most important hyperparameter after n:
                                A large dim is a powerful, but large, model
@@ -42,8 +46,8 @@ class NeuralNgram(L.LightningModule):
         self.save_hyperparameters()
         assert n > 0
         self.n = n
-        self.cw = n - 1
-        """cw (context window): The number of preceding tokens we condition on to predict the next one"""
+        self.w = n - 1
+        """w (window): The number of preceding tokens we condition on to predict the next one"""
         self.dim = dim
         self.depth = depth
         self.padding_idx = padding_idx
@@ -58,7 +62,7 @@ class NeuralNgram(L.LightningModule):
         # 
         # You can use any neural net you like to do this:
         # simply (a few lines of code), or you can be more fancy.
-        # MlpNet (models/mlp.py), nn.Sequential, nn.Linear, etc. may be useful
+        # MlpNet (models/mlp.py), nn.Sequential, nn.Linear, nn.LayerNorm, nn.RMSNorm, etc. may be useful
         #
         # TODO-LAB unit1.lab2
         # self.net = ... 
@@ -126,7 +130,7 @@ class NeuralNgram(L.LightningModule):
 
         # Left pad (to allow a full ngram at pos 0)        
         pad_vec = self.embed.weight[self.padding_idx].detach()
-        left_pad = pad_vec.view(1, 1, -1).expand(B, self.cw, D)
+        left_pad = pad_vec.view(1, 1, -1).expand(B, self.w, D)
         padded = torch.cat([left_pad, embedded_tokens], dim=1)  # (B, L+cw, D)
 
         # Take sliding windows of length n over dim=1
@@ -136,12 +140,12 @@ class NeuralNgram(L.LightningModule):
     
     def training_step(self, batch):
         loss = self._loss(batch)
-        self.log("train_ce", loss, prog_bar=True, logger=True)
+        self.log("train_loss", loss, prog_bar=True, logger=True)
         return loss
 
     def validation_step(self, batch):
         loss = self._loss(batch)
-        self.log("val_ce", loss, prog_bar=True, logger=True)
+        self.log("val_loss", loss, prog_bar=True, logger=True)
         return loss
     
     def _loss(self, batch):

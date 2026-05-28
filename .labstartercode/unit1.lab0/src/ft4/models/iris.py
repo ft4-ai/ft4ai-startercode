@@ -13,6 +13,8 @@ NUM_FEATURES = len(FEATURE_COLS)
 SPECIES: List[str] = ["setosa", "versicolor", "virginica"]
 NUM_SPECIES = len(SPECIES)
 
+# Train this model: ft4 train path/to/model.py
+# See mlops/README.md for details.
 class IrisClassifier(L.LightningModule):
     """
     A tiny "hello world" classifier of the Iris dataset.
@@ -51,7 +53,7 @@ class IrisClassifier(L.LightningModule):
         iris_measurements, species = batch
         logits = self(iris_measurements)
         loss = self.criterion(logits, species)
-        self.log("train_ce", loss, prog_bar=True)
+        self.log("train_loss", loss, prog_bar=True)
         return loss
 
     def validation_step(self, batch: Tuple[Tensor, Tensor], batch_idx: int) -> None:
@@ -65,7 +67,7 @@ class IrisClassifier(L.LightningModule):
         preds = logits.argmax(dim=-1)
         acc = (preds == species).float().mean()
         loss = self.criterion(logits, species)
-        self.log("val_ce", loss, prog_bar=True)
+        self.log("val_loss", loss, prog_bar=True)
         self.log("val_acc", acc, prog_bar=True)
         return loss
 
@@ -91,7 +93,7 @@ class IrisClassifier(L.LightningModule):
         """
         # Wrap the data into a tensor of shape (1,4) and place it on this model's device.
         # In AI, tensors usually have a first dim == batch_size
-        # Even if we're working with just a single datum, we use a batch_size of 1.
+        # Even if we're working with just a single datum, we put it in a batch, with batch_size = 1.
         # This keeps interfaces uniform.
         iris_measurements = None # TODO-LAB unit1.lab0 
         # Hint 1: torch.tensor and torch.unsqueeze may be useful
@@ -141,32 +143,3 @@ class IrisDataModule(L.LightningDataModule):
         return DataLoader(self.val_ds, batch_size=self.batch_size, shuffle=False, num_workers=0) #type:ignore
 
 
-if __name__ == "__main__":
-    # Demo: Train and make some example predictions
-
-    import warnings
-    from lightning.pytorch.callbacks import RichProgressBar, TQDMProgressBar
-
-    warnings.filterwarnings("ignore", message=r".*does not have many workers.*", category=UserWarning,)
-    torch.set_float32_matmul_precision('medium') # Silence warnings
-
-    print('Iris classifier demo: "hello world" of AI\n')
-    dm = IrisDataModule(batch_size=32)
-    dm.setup()
-    model = IrisClassifier()
-    trainer = L.Trainer(
-        max_epochs=16,
-        callbacks=[RichProgressBar()],
-        log_every_n_steps=1,
-        logger=False,
-        enable_checkpointing=False,
-    )
-    trainer.fit(model, datamodule=dm)
-
-    print('\nPredicting...')
-    model.eval() # Switching to eval mode improves some models
-    ex1 = (5.1, 3.5, 1.4, 0.2)  # likely setosa
-    ex2 = (6.0, 2.9, 4.5, 1.5)  # likely versicolor
-    for ex in (ex1, ex2):
-        pred = model.classify_iris(*ex)
-        print(f"Input {ex} -> predicted: {SPECIES[pred]} ({pred})")

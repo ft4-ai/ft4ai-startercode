@@ -2,19 +2,16 @@
 
 ![From Tensors to Turing Tests](doc/img/ft4ai_logo.png)
 
-**From Tensors to Turing Tests** teaches generative AI and LLMs, theory and practice, using a series of hands on guided 
-activities called labs. This repo contains the tools and starter code you will use. After you've cloned 
-this repo, you should [install](#install) and [verify](#verify) your environment as described below, and 
-then [start the first lab](#start-the-labs).
+**From Tensors to Turing Tests** teaches generative AI and LLMs, theory and practice, using a series of hands on guided activities called labs. This repo contains the tools and starter code you will use. After you've cloned 
+this repo, you should [install](#install) and [verify](#verify) your environment as described below, and then [start the first lab](#start-the-labs).
 
-All the labs can be done on a laptop with a GPU or a simple cloud GPU, or, if with some 
-adjustment, on a CPU. Linux, macOS, Windows (WSL recommended) are all supported.
+All the labs' model can be trained on a laptop GPU, or with some adjustments, on a CPU. They can also be trained on a cloud GPU for less than the [price of a candy bar](https://www.target.com/p/snickers/-/A-13055565). Linux, macOS, Windows (WSL recommended) are all supported.
 
 Follow the installations instructions for your platform below.
 
 # Install
 
-Installation is via `pip` or `uv`. The specific command depends on your platform:
+Install via `uv` (recommended) or `pip`. The specific command depends on your platform:
 
 ## You have a standard (i.e. CUDA) GPU
 
@@ -30,56 +27,58 @@ Versions 12, 13, or newer will work. If you haven't installed the CUDA drivers, 
 * [Ubuntu (native) instructions](https://documentation.ubuntu.com/server/how-to/graphics/install-nvidia-drivers)
 * [General NVIDIA instructions](https://docs.nvidia.com/datacenter/tesla/driver-installation-guide/)
 
-Then install requirements via `pip`:
-```bash
-$ python -m venv .venv
-$ source .venv/bin/activate
-(.venv) $ python -m pip install -r requirements-cu128.txt
-```
-
-Or install via `uv` (pip-compatible but faster), which automatically creates the `.venv` and runs inside it:
-```bash
+Install via `uv` (pip-compatible but faster), which automatically creates the `.venv` and runs inside it:
+```shell-session
 $ pipx install uv # If you haven't previously installed uv
 # No need to manually create a .venv
-$ uv sync --extra torch-cu128
+$ uv sync --extra torch-cu126
+```
+
+Or, if you prefer, use `pip`:
+```shell-session
+$ python -m venv .venv
+$ source .venv/bin/activate
+(.venv) $ pip install -r requirements-cu126.txt
+(.venv) $ pip install -e . # Allows running tools like `ft4`
 ```
 
 ## You don't have any GPU
 
 You can run this course without any GPU. Each model has adjustable size and datasets, 
-and if you keep them small, they'll run fine on a CPU. Output may not be as impressive, but so what?
+and if you keep them small, they'll run fine on a CPU. Output may not be impressive, but so what?
 
-Via `pip`:
-```bash
-$ python -m venv .venv
-$ source .venv/bin/activate
-(.venv) $ python -m pip install -r requirements-cpu.txt
-```
-
-Or via `uv`:
-```bash
+Via `uv`:
+```shell-session
 $ pipx install uv # If you haven't previously installed uv
 $ uv sync --extra torch-cpu
+```
+
+Or via `pip`:
+```shell-session
+$ python -m venv .venv
+$ source .venv/bin/activate
+(.venv) $ pip install -r requirements-cpu.txt
+(.venv) $ pip install -e . # Allows running tools like `ft4`
 ```
 
 ## You're running on a cloud GPU
 
 Cloud GPUs, such as [RunPod](https://www.runpod.io), usually include a system-wide PyTorch you can use.
 
-Via `pip`:
-```bash
-$ python -m venv --system-site-packages .venv # Allow the venv to use the system-wide packages
-$ source .venv/bin/activate
-(.venv) $ python -m pip install -r requirements-external.txt
-```
-
-Or via `uv`:
-```bash
+Via `uv`:
+```shell-session
 $ pip install --no-cache-dir uv            # If you haven't previously installed uv
 $ uv venv --system-site-packages           # Tell uv to use the system-wide packages
 $ uv sync --extra torch-external --inexact # and not to install PyTorch separately
 ```
 
+Or via `pip`:
+```shell-session
+$ python -m venv --system-site-packages .venv # Allow the venv to use the system-wide packages
+$ source .venv/bin/activate
+(.venv) $ python -m pip install -r requirements-external.txt
+(.venv) $ pip install -e . # Allows running tools like `ft4`
+```
 You can use the provided `tools/container-setup.sh` to automatically setup the Cloud GPU and pull your code.
 
 ## You have a AMD ROCm, Intel GPU, Apple Silicon, or other non-standard GPU
@@ -92,6 +91,7 @@ $ python -m venv .venv
 $ source .venv/bin/activate
 # Install PyTorch manually. Afterwards:
 (.venv) $ python -m pip install -r requirements-external.txt
+(.venv) $ pip install -e . # Allows running tools like `ft4`
 ```
 
 ---
@@ -136,5 +136,4 @@ The course and lab guides are at https://ft4.ai.
 
 ## Feedback and PRs
 
-Feedback greatly appreciated! PRs, suggestions, and any comments 
-are all extremely helpful.
+Feedback greatly appreciated! PRs, suggestions, and any comments are all greatly appreciated. I'll do my best to respond on a timely basis.

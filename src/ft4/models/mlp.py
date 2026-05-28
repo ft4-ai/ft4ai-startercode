@@ -1,4 +1,6 @@
+import torch
 import torch.nn as nn
+torch.set_float32_matmul_precision('high')
 
 class MlpBlock(nn.Module):
     def __init__(self, dim: int, expansion_factor: int=4):

@@ -21,6 +21,7 @@ def test_forward_shape() -> None:
 
 @pytest.mark.lab("unit1.lab0")
 @pytest.mark.filterwarnings("ignore:.*worker.*")
+@pytest.mark.filterwarnings("ignore:.*isinstance.*treespec, LeafSpec.*is deprecated.*") #type:ignore
 def test_train_and_validate_threshold(iris_dm) -> None:
     model = IrisClassifier()
 
@@ -40,6 +41,7 @@ def test_train_and_validate_threshold(iris_dm) -> None:
 
 @pytest.mark.lab("unit1.lab0")
 @pytest.mark.filterwarnings("ignore:.*worker.*")
+@pytest.mark.filterwarnings("ignore:.*isinstance.*treespec, LeafSpec.*is deprecated.*") #type:ignore
 def test_classify_iris(iris_dm) -> None:
     model = IrisClassifier()
     trainer = L.Trainer(max_epochs=32,
