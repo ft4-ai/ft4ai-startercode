@@ -116,7 +116,7 @@ def _chunked(batch, seq_len):
     return {'tokens': binpack(batch, seq_len, drop_last=True)}
 
 
-if __name__ == '__main__' and True:
+if __name__ == '__main__':
     import torch
 
     BATCH_SIZE = 4
@@ -125,12 +125,15 @@ if __name__ == '__main__' and True:
     print(f'# Demonstrating StoriesDataModule({BATCH_SIZE=} {SEQ_LEN=})')
     print(f'## We use data_size="small" for dev, and "medium" or "full" for power')
     sdm = StoriesDataModule(batch_size=BATCH_SIZE, seq_len=SEQ_LEN, data_size='small')
-    print('\n## .prepare_data() downloads and caches the data...')
+    sdm.num_proc = 1 # Use only 1 CPU thread for this demo
+    print('\n## We neeed a few steps to feed our pipeline.')
+    print('\n## PyTorch Lightning normally does this automatically, but we show them here individually:')
+    print('\n### .prepare_data() downloads and caches the data...')
     sdm.prepare_data()
-    print('## .setup("train") tokenizes it and packages it into (B,L) shaped tensors...')
-    sdm.setup('train')
-    print('## .train_dataloader() gives us an iterable DataLoader')
-    train_dl = sdm.train_dataloader(shuffle=False)
+    print('### .setup("train") tokenizes it and packages it into (B,L) shaped tensors...')
+    sdm.setup('fit')
+    print('### .train_dataloader() gives us an iterable DataLoader')
+    train_dl = sdm.train_dataloader(shuffle=True)
 
     for batch in train_dl:
         print(f'## Each iteration returns a dict-like `batch`, with `batch[tokens]` a (B,L) tensor:')
@@ -140,7 +143,7 @@ if __name__ == '__main__' and True:
 
         print(f'\n## Tokens map words, or word fragments, to integers:\n     {Ft4Tokenizer.tokenize("the")=}\n     {Ft4Tokenizer.detokenize([4161])=}')
         print(f'\n## Metatokens such as PAD ({Ft4Tokenizer.RES_PAD}), which indicates padding, \n## or BOS ({Ft4Tokenizer.RES_START}), which indicates "beginning of sequence", are reserved.')
-        print('## Our tokenizer ensures that *each* sequence is a full L tokens. \n## Other tokenizers use a special PAD token to do this.\n')
+        print('## StoriesDataModule ensures that *each* sequence is a full L tokens. \n## Other pipelines use a special PAD token to do this.\n')
 
         print("## Sequences and batches are shuffled for best performance, \n## so batch[0] could be a sequence of L tokens *anywhere* in the dataset.\n")
 

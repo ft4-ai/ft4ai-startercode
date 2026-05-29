@@ -2,32 +2,49 @@
 
 ![From Tensors to Turing Tests](doc/img/ft4ai_logo.png)
 
-**From Tensors to Turing Tests** teaches generative AI and LLMs, theory and practice, using a series of hands on guided activities called labs. This repo contains the tools and starter code you will use. After you've cloned 
-this repo, you should [install](#install) and [verify](#verify) your environment as described below, and then [start the first lab](#start-the-labs).
+**From Tensors to Turing Tests** teaches generative AI and LLMs, theory and practice,
+using a series of hands on guided activities called labs. This repo contains the tools and
+starter code you will use. After you've cloned this repo, you should [install](#install)
+and [verify](#verify) your environment as described below, and then [start the first
+lab](#start-the-labs).
 
-All the labs' model can be trained on a laptop GPU, or with some adjustments, on a CPU. They can also be trained on a cloud GPU for less than the [price of a candy bar](https://www.target.com/p/snickers/-/A-13055565). Linux, macOS, Windows (WSL recommended) are all supported.
+All the labs' model can be trained on a laptop GPU, or trained on a cloud GPU for less
+than the [price of a candy bar](https://www.target.com/p/snickers/-/A-13055565). Most can,
+with some patience, be done on a CPU. Linux, macOS, Windows (WSL recommended) are all
+supported.
 
-Follow the installations instructions for your platform below.
+Follow the installations instructions for your platform below to [install
+dependencies](#install-dependencies), [verify](#verify), and [start the
+labs](#start-the-labs).
 
-# Install
+# Install Dependencies
 
-Install via `uv` (recommended) or `pip`. The specific command depends on your platform:
+Install the dependencies via `uv` (recommended) or `pip`. The specific command depends on
+your platform:
 
-## You have a standard (i.e. CUDA) GPU
+## ⇨ You have a standard (i.e. CUDA) GPU
 
-If you have a standard NVIDIA GPU, and have already installed the CUDA drivers, installation is simple:
+If you have a standard NVIDIA GPU, and have already installed the CUDA drivers,
+installation is simple:
 
 First, verify your CUDA install:
 ```bash
 $ nvidia-smi
 ```
-Versions 12, 13, or newer will work. If you haven't installed the CUDA drivers, see:
-* [WSL instructions](https://docs.nvidia.com/cuda/wsl-user-guide/index.html); also see [Microsoft's guide](https://learn.microsoft.com/en-us/windows/ai/directml/gpu-cuda-in-wsl)
-    * On WSL, do *not* install a Linux NVIDIA driver inside WSL; use the Windows driver above
-* [Ubuntu (native) instructions](https://documentation.ubuntu.com/server/how-to/graphics/install-nvidia-drivers)
-* [General NVIDIA instructions](https://docs.nvidia.com/datacenter/tesla/driver-installation-guide/)
+Versions 12, 13, or newer will work. If you haven't installed the CUDA drivers, see [WSL
+instructions](https://docs.nvidia.com/cuda/wsl-user-guide/index.html) (also see
+[Microsoft's
+guide](https://learn.microsoft.com/en-us/windows/ai/directml/gpu-cuda-in-wsl)), [Ubuntu
+(native)
+instructions](https://documentation.ubuntu.com/server/how-to/graphics/install-nvidia-drivers),
+and [General NVIDIA
+instructions](https://docs.nvidia.com/datacenter/tesla/driver-installation-guide/).
+    
+* Important: Do *not* install a Linux NVIDIA driver inside WSL. Use the Windows driver
+  above.
 
-Install via `uv` (pip-compatible but faster), which automatically creates the `.venv` and runs inside it:
+Then install the remaining dependencies via `uv` (pip-compatible but faster), which
+automatically creates the `.venv` and runs inside it:
 ```shell-session
 $ pipx install uv # If you haven't previously installed uv
 # No need to manually create a .venv
@@ -42,10 +59,10 @@ $ source .venv/bin/activate
 (.venv) $ pip install -e . # Allows running tools like `ft4`
 ```
 
-## You don't have any GPU
+## ⇨ You don't have any GPU
 
-You can run this course without any GPU. Each model has adjustable size and datasets, 
-and if you keep them small, they'll run fine on a CPU. Output may not be impressive, but so what?
+You can run this course without any GPU. Each model has adjustable size and datasets, and
+if you keep them small, they'll run on a CPU. Output may not be impressive, but so what?
 
 Via `uv`:
 ```shell-session
@@ -61,9 +78,10 @@ $ source .venv/bin/activate
 (.venv) $ pip install -e . # Allows running tools like `ft4`
 ```
 
-## You're running on a cloud GPU
+## ⇨ You're running on a cloud GPU
 
-Cloud GPUs, such as [RunPod](https://www.runpod.io), usually include a system-wide PyTorch you can use.
+Cloud GPUs, such as [RunPod](https://www.runpod.io), usually include a system-wide PyTorch
+you can use.
 
 Via `uv`:
 ```shell-session
@@ -79,9 +97,10 @@ $ source .venv/bin/activate
 (.venv) $ python -m pip install -r requirements-external.txt
 (.venv) $ pip install -e . # Allows running tools like `ft4`
 ```
-You can use the provided `tools/container-setup.sh` to automatically setup the Cloud GPU and pull your code.
+You can use the provided `tools/container-setup.sh` to automatically setup the Cloud GPU
+and pull your code.
 
-## You have a AMD ROCm, Intel GPU, Apple Silicon, or other non-standard GPU
+## ⇨ You have a AMD ROCm, Intel GPU, Apple Silicon, or other non-standard GPU
 
 Manually install the appropriate PyTorch. See https://pytorch.org/get-started/locally/ .
 
@@ -121,7 +140,7 @@ $ source .venv/bin/activate
 
 # Start the Labs
 
-Congratulations! Now begin the course and start the Lab 0:
+Congratulations! Now begin the [course](https://ft4.ai/course/unit1) and start [Lab 0](https://ft4.ai/course/unit1/lab0):
 ```bash
 # You can also invoke these with `-h` to see help
 $ ./startnextlab            # Starts unit1.lab0
@@ -130,10 +149,9 @@ $ pytest --only-lab         # Run tests for this lab only
 $ grep -r 'TODO-LAB' src    # Finds code for you to write
 ```
 
-The course and lab guides are at https://ft4.ai.
+The course and lab guides are at https://ft4.ai. Start with [Unit
+1 Concepts](https://ft4.ai/course/unit1), then proceed to [Lab
+0](https://ft4.ai/course/unit1/lab0).
 
----
-
-## Feedback and PRs
-
-Feedback greatly appreciated! PRs, suggestions, and any comments are all greatly appreciated. I'll do my best to respond on a timely basis.
+If you have feedback, questions, or PRs, please share them. I'll do my best to respond on
+a timely basis.

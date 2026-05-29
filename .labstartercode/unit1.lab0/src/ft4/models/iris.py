@@ -92,10 +92,12 @@ class IrisClassifier(L.LightningModule):
             cls_id: int in {0,1,2}.
         """
         # Wrap the data into a tensor of shape (1,4) and place it on this model's device.
-        # In AI, tensors usually have a first dim == batch_size
-        # Even if we're working with just a single datum, we put it in a batch, with batch_size = 1.
-        # This keeps interfaces uniform.
-        iris_measurements = None # TODO-LAB unit1.lab0 
+        # In AI, tensors' first dim is the batch size B. Even if we have onle a single datum, 
+        # we put it in a batch of size 1, so interfaces stay uniform:
+        #   iris_measurements has shape (B, F)
+        #   where B = batch_size
+        #         F = num_features
+        iris_measurements = ... # TODO-LAB unit1.lab0 Create the appropriate tensor
         # Hint 1: torch.tensor and torch.unsqueeze may be useful
         # Hint 2: self.device tells you the device (e.g. cpu, cuda) this model is on
         raise NotImplementedError("Implement in unit1.lab0")
