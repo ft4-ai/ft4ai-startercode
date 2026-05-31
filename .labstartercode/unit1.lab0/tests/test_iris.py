@@ -45,7 +45,6 @@ def test_train_and_validate_threshold(iris_dm) -> None:
 def test_classify_iris(iris_dm) -> None:
     model = IrisClassifier()
     trainer = L.Trainer(max_epochs=32,
-                        accelerator='cpu',
                         enable_progress_bar=False, 
                         enable_checkpointing=False,
                         enable_model_summary=False,

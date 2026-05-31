@@ -12,9 +12,8 @@ trainer:
    
   # Validation is quick and useful. Adjust to taste.
   # Will also save a checkpoint and generate sample text after each validation.
-  val_check_interval: "00:00:10:00" # Every 10 min (DD:HH:MM:SS)
-  # The `ft4.yaml` includes a ckpt save at the end of the run
-  
+  #val_check_interval: "00:00:10:00" # Every 10 min (DD:HH:MM:SS)
+  val_check_interval: 0.2
   
   # UI niceties — flip off if you're piping logs to a file or running in CI.
   enable_progress_bar: true

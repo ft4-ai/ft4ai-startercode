@@ -2,7 +2,7 @@
 #
 # Overrides `defaults.yaml`.
 #
-# For tweaks you don't want to commit, drop them in `iris.local.yaml` (gitignored).
+# Drops tweaks you don't want to commit in `iris.local.yaml` (gitignored).
 #
 # You can also config on the command line:
 #     ft4 train path/to/iris.py --trainer.max_epochs=4

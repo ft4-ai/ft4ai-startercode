@@ -51,7 +51,7 @@ class UniformModel(L.LightningModule):
         V = self.vocab_size
         # Determine the logits:
         # The UniformModel trivially predicts an identical logit for *every* candidate in the vocab.
-        logits = None # TODO-LAB unit1.lab1
+        logits = ... # TODO-LAB unit1.lab1
         raise NotImplementedError("Implement in unit1.lab1")
         return logits
 
