@@ -1,6 +1,6 @@
 # From Tensors to Turing Tests
 
-![From Tensors to Turing Tests](doc/img/ft4ai_logo.png)
+![From Tensors to Turing Tests](doc/img/ft4ai_frontspiece.png)
 
 **From Tensors to Turing Tests** teaches generative AI and LLMs, theory and practice,
 using a series of hands on guided activities called labs. This repo contains the tools and
