@@ -20,7 +20,7 @@ model:
   dim: !TODO-LAB unit1.lab2     # For a fixed n, dim is by far the most important hyperparameter
   depth: !TODO-LAB unit1.lab2   # depth should generally be 1/50 to 1/100 the size of dim
   expansion_factor: 4
-  lr: 3.0e-4 !TODO-LAB unit1.lab2  # Experiment with different values of the learning rate
+  lr: !TODO-LAB unit1.lab2  # Experiment with different values of the learning rate. 3.0e-4 is a good start. What happens if you make it larger?
   warmup_steps: 3000
 
 data:
