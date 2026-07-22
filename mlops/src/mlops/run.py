@@ -207,7 +207,11 @@ def run(ft4_args: Ft4Args, *, runs_root: Path = Path("runs")) -> int:
     # or write_sample_file raises, training proceeds and the session is
     # still recorded. Non-generative models silently skip (with a warning).
     if ckpt_path is None:
-        from mlops.sampling import generate_sample_markdown, write_sample_file
+        from mlops.sampling import (
+            SamplingUnsupported,
+            generate_sample_markdown,
+            write_sample_file,
+        )
         try:
             baseline_text = generate_sample_markdown(
                 cli.model,
@@ -216,10 +220,14 @@ def run(ft4_args: Ft4Args, *, runs_root: Path = Path("runs")) -> int:
                 max_to_generate=60,
             )
             write_sample_file(hset.dir, step=0, text=baseline_text)
+        except SamplingUnsupported:
+            pass  # non-generative model (e.g. a classifier): nothing to sample
         except Exception as e:
             print(
-                f"Warning: phase-1 baseline sample generation failed "
-                f"({type(e).__name__}: {e}); continuing without baseline samples.",
+                f"Warning: phase-1 baseline sample generation failed; "
+                f"continuing without baseline samples. If this model isn't a "
+                f"language model, set is_language_model = False on it. "
+                f"Underlying error: {type(e).__name__}: {e}",
                 file=sys.stderr,
             )
 

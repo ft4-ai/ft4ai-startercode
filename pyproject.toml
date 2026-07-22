@@ -26,7 +26,7 @@ dependencies = [
 ft4 = "mlops.main:main"
 
 [project.optional-dependencies]
-# Choose exactly ONE of these:
+# Choose exactly ONE of these torch sources:
 torch-cpu = [
   "torch>=2.11.0, <2.12.0",
   "lightning==2.6.1",
@@ -35,10 +35,20 @@ torch-cu126 = [
   "torch>=2.11.0, <2.12.0",
   "lightning==2.6.1",
 ]
-
+torch-macos = [
+  "torch>=2.11.0, <2.12.0",   # Standard PyPI wheel: Apple GPU (MPS) with CPU fallback
+  "lightning==2.6.1",
+]
 # For clusters / IT-managed installs using system torch:
 torch-external = [
   "lightning==2.6.1"   # no torch here; use system torch
+]
+# We also duplicate dev here, so that pip can install them.
+# (Deliberately duplicates [dependency-groups] dev below, which uv sync installs
+# automatically; PEP 735 groups are invisible to pip's extra syntax.)
+dev = [
+  "pytest>=9.0.3, <9.1.0",
+  "pytest-watcher>=0.6.3, <0.7.0",
 ]
 
 # Route torch to the right PyTorch index only when that extra is selected
@@ -65,6 +75,9 @@ conflicts = [
   [{extra="torch-cpu"},      {extra="torch-cu126"}],
   [{extra="torch-external"}, {extra="torch-cpu"}],
   [{extra="torch-external"}, {extra="torch-cu126"}],
+  [{extra="torch-macos"},    {extra="torch-cpu"}],
+  [{extra="torch-macos"},    {extra="torch-cu126"}],
+  [{extra="torch-macos"},    {extra="torch-external"}],
 ]
 # Add a cooling off period, for security
 exclude-newer = "14 days"

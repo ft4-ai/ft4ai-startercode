@@ -26,8 +26,7 @@ class UniformModel(L.LightningModule):
       - automatic_optimization is off,
       - training_step is a no-op,
       - configure_optimizers returns None.
-    validation_step still reports cross-entropy: for a uniform distribution
-    over V tokens, val_ce = log(V) -- the baseline any real model must beat.
+    validation_step still reports cross-entropy, giving a baseline any real model must beat.
     """
     def __init__(self, vocab_size: int = Ft4Tokenizer.vocab_size()):
         super().__init__()

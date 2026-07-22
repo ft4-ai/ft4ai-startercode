@@ -21,6 +21,10 @@ class IrisClassifier(L.LightningModule):
 
     """
 
+    # A classifier, not a language model: `ft4 train` shouldn't try to
+    # generate text samples from it.
+    is_language_model = False
+
     def __init__(self) -> None:
         assert NUM_FEATURES == 4
         assert NUM_SPECIES == 3
@@ -92,7 +96,7 @@ class IrisClassifier(L.LightningModule):
             cls_id: int in {0,1,2}.
         """
         # Wrap the data into a tensor of shape (1,4) and place it on this model's device.
-        # In AI, tensors' first dim is the batch size B. Even if we have onle a single datum, 
+        # In AI, tensors' first dim is the batch size B. Even if we have only a single datum, 
         # we put it in a batch of size 1, so interfaces stay uniform:
         #   iris_measurements has shape (B, F)
         #   where B = batch_size
@@ -100,6 +104,7 @@ class IrisClassifier(L.LightningModule):
         iris_measurements = ... # TODO-LAB unit1.lab0 Create the appropriate tensor
         # Hint 1: torch.tensor and torch.unsqueeze may be useful
         # Hint 2: self.device tells you the device (e.g. cpu, cuda) this model is on
+        # Hint 3: See https://ft4.ai/course/articles/tensors-and-devices/
         raise NotImplementedError("Implement in unit1.lab0")
         logits = self(iris_measurements)
         return int(logits.argmax(dim=-1).item())

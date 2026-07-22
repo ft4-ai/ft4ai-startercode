@@ -24,6 +24,13 @@ DEFAULT_SAMPLE_PROMPTS = [
 ]
 
 
+class SamplingUnsupported(Exception):
+    """Raised when a model declares it can't be sampled as a language model
+    (``is_language_model = False``). Callers treat this as a clean, silent
+    skip, unlike arbitrary exceptions, which mean something actually went
+    wrong and deserve a warning."""
+
+
 def generate_completions(
     model,
     prompts: list[str],
@@ -46,6 +53,13 @@ def generate_completions(
     handle that.
     """
     from ft4.lang_gen import LangGen
+
+    # Models opt out of sampling with `is_language_model = False` (e.g.
+    # classifiers like iris). Default True, so language models need no
+    # annotation. Anything that does NOT opt out but still fails below
+    # raises its original exception, which callers surface as a warning.
+    if getattr(model, "is_language_model", True) is False:
+        raise SamplingUnsupported(f"{type(model).__name__} sets is_language_model=False")
 
     lg_kwargs: dict = {"max_to_generate": max_to_generate}
     if temperature is not None:
@@ -90,7 +104,9 @@ def generate_sample_markdown(
         out_lines.append("")
         out_lines.append("---")
         out_lines.append("")
-    return "\n".join(out_lines)
+    # utf8: one choke point covers all three emit surfaces —
+    # Rich panel, plain-text stdout, and the sample .md files.
+    return utf8("\n".join(out_lines))
 
 
 def write_sample_file(hset_dir: Path, step: int, text: str) -> Path:
@@ -112,3 +128,19 @@ def write_sample_file(hset_dir: Path, step: int, text: str) -> Path:
     path = samples_dir / f"step_{step:06d}.md"
     path.write_text(text, encoding="utf-8", errors="replace")
     return path
+
+def utf8(s: str) -> str:
+    """Make model-generated text safe for strict-UTF-8 streams (Rich, files,
+    redirected stdout).
+
+    LangGen decodes each token with errors='surrogateescape', so a token
+    whose bytes aren't valid UTF-8 on their own (especially common early in
+    training, when the model emits raw byte-tokens) yields surrogate code points that
+    crash any strict encoder downstream. Because surrogateescape is
+    byte-faithful, we can recover the original bytes here and re-decode:
+    a valid multibyte char split across adjacent tokens reassembles into
+    the real char; only genuinely invalid byte sequences become U+FFFD.
+    ASCII (all markdown markup) passes through unchanged, and the function
+    is idempotent.
+    """
+    return s.encode("utf-8", errors="surrogateescape").decode("utf-8", errors="replace")

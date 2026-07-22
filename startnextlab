@@ -8,7 +8,18 @@ Usage:
   startnextlab --status  # show next lab & count
 
 This tool updates the `.labs_started` file, and will abort 
-if labs have been started without recording them in it.
+if labs have been manually copied without recording them in it.
+
+Internals:
+  .labstartercode/       # Contains starter code src, e.g. .labstartercode/unit1.lab0/
+  .labs_started            # Lists each lab already started, one per line
+
+Running `./startnextlab` looks at `.labstarted` to determine the next lab,
+copies in the startercode from `.labstartercode/unitX.labY/`, and adss the lab 
+to .labs_started. That's it!
+
+To get the newest labs, commit any local changes you've made, then run:
+  git pull https://github.com/ft4-ai/ft4ai-startercode.git main
 """
 import argparse
 import sys
@@ -24,6 +35,7 @@ ROOT         = Path.cwd()
 STARTER_ROOT = ROOT / '.labstartercode'
 LEDGER_FILE  = ROOT / '.labs_started'
 LABNOTES_DIR   = ROOT / 'labnotes'
+BASE_URL = 'https://ft4.ai/course'
 
 # Exit codes
 EXIT_OK       = 0
@@ -72,11 +84,9 @@ if next_lab is None:
     print("All available labs already started. You can check for new labs via:\n  git pull")
     sys.exit(EXIT_OK)
 
-## Change "unitX.labY" to "Unit X Lab Y"
-# lab_str = re.sub(r'(?i)\b(unit|lab)(\d+)\b', 
-#                  lambda m: f"{m.group(1).title()} {m.group(2)}",
-#                  next_lab).replace('.', ' ')
 lab_str = next_lab # Just use "unitX.labY" format
+unit, lab = next_lab.split(".")
+lab_url = f"{BASE_URL}/{unit}/{lab}/"
 
 # 4. Gather stubs for next_lab
 stub_dir = STARTER_ROOT / next_lab
@@ -124,6 +134,7 @@ if args.dry_run:
     print(f"To start the next lab: {lab_str}, \nthese files will be created ({len(dest_files)}):")
     for f in dest_files:
         print("  " + str(f))
+    print(f"Lab guide: {lab_url}")
     sys.exit(EXIT_OK)
 
 # --- Commit Phase ---
@@ -164,4 +175,6 @@ with open(labnotes_file, 'w') as rf:
     rf.write("*TODO Record your answers, results, and notes here.*\n")
 
 print(f"{lab_str} started.\nLab Notebook created at '{labnotes_file!s}'.")
+print(f"Lab guide: {lab_url}")
+
 

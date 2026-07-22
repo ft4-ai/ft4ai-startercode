@@ -17,7 +17,7 @@ data:
     seq_len: 512
     batch_size: 2048          # Tune for max speed; you should be able to make this quite large
     val_batch_size: 32        # Keep small to fit in memory
-    data_size: !TODO-LAB unit1.lab1   # `small` for fast dev; then `medium` or `full` for best results
+    data_size: !TODO-LAB unit1.lab1   # "small" for fast dev; then "medium" or "full" for best results
 
 trainer:
   accelerator: cpu            # this model's forward is a Python per-position loop; CPU > GPU here

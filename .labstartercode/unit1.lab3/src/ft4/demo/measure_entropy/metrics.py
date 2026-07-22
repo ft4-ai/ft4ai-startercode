@@ -11,5 +11,5 @@ def max_corpus_entropy(guesser_accuracy: float, vocab_size: int) -> float:
     """
     assert vocab_size > 1
     # Return the upper bound on the corpus entropy, in nats.
-    # Hint: Use an approach similar to what you used for Question A ("True entropy of natural language")
+    # Hint: Use an approach similar to what you used in previous parts of the lab.
     raise NotImplementedError('TODO-LAB unit1.lab3')

@@ -15,7 +15,7 @@ import torch
 
 from mlops.hset_state import Ft4Args, Ft4UserError
 from mlops.prepare import PreparedRun, prepare_run
-from mlops.sampling import DEFAULT_SAMPLE_PROMPTS
+from mlops.sampling import DEFAULT_SAMPLE_PROMPTS, utf8
 
 
 _DEFAULT_MAX_TOKENS = 2048
@@ -162,7 +162,7 @@ def _stream_completions(
             try:
                 lg = LangGen(model=model, initial_txt=prompt, **lg_kwargs)
                 for token_str in lg:
-                    stream.write(token_str)
+                    stream.write(utf8(token_str))
                     stream.flush()
             finally:
                 # Newline ends the prompt's output even on mid-stream exception,

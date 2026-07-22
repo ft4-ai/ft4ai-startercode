@@ -20,10 +20,10 @@ Below, we explain what `ft4` does, why, and how it works.
 ML engineering is like software engineering from the year 2000, before `git` and `pytest`:
 we struggle to track history, reliably undo changes, and produce deterministic, testable,
 automated builds. Model behavior depends not only on code (which we track well), but on
-data (*huge*), hyperparameters (which need to tune) and parameters (*opaque*). ML unit
+data (*huge*), hyperparameters (which need tuning) and parameters (*opaque*). ML unit
 testing is in its infancy.
 
-We need to experiment—tuning code, hyperparameters, trainining runs, data, and models—and
+We need to experiment—tuning code, hyperparameters, training runs, data, and models—and
 we need to track these. We need to restore checkpoints when we can (so we don't have to
 retrain from scratch), but start new ones when we must (e.g. a hyperparameter changes
 incompatibly).

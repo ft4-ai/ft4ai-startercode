@@ -63,7 +63,7 @@ print()
 
 if missing_dep:
     print("Some dependencies missing. See README.md for installation instructions.")
-    print("Alternatively, the code may work (with less functionality) even without the dep.\n")
+    #print("Alternatively, the code may work (with less functionality) even without the dep.\n")
     exit(1)
 else:
-    print("All depencies installed. You're good to go. Run the unit tests via `pytest`.\n")
+    print("All dependencies installed. You're good to go. Run the unit tests via `pytest`.\n")

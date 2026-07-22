@@ -98,7 +98,13 @@ class SampleGenerationCallback(L.Callback):
     def _maybe_write(self, trainer: L.Trainer, pl_module: L.LightningModule) -> None:
         if self.hset_dir is None:
             return  # not yet injected; shouldn't happen if smart flow ran
-        from mlops.sampling import generate_sample_markdown, write_sample_file
+        from mlops.sampling import (
+            SamplingUnsupported,
+            generate_sample_markdown,
+            write_sample_file,
+        )
+        if self._failure_warned:
+            return  # already skipped/failed once this session; don't retry
         step = int(trainer.global_step)
         try:
             text = generate_sample_markdown(
@@ -112,12 +118,17 @@ class SampleGenerationCallback(L.Callback):
             # (and any other consumer) can pick it up without duplicating
             # the generation work.
             pl_module._ft4_latest_sample = (step, text) #type:ignore
+        except SamplingUnsupported:
+            # Model declared itself non-generative (e.g. a classifier like
+            # iris). Expected and uninteresting: skip silently this session.
+            self._failure_warned = True
         except Exception as e:
-            if not self._failure_warned:
-                self._failure_warned = True
-                print(
-                    f"Warning: sample generation failed "
-                    f"({type(e).__name__}: {e}); skipping samples for the "
-                    f"rest of this session.",
-                    file=sys.stderr,
-                )
+            self._failure_warned = True
+            print(
+                f"Warning: this model was expected to generate samples, but "
+                f"sampling failed; skipping samples for the rest of this "
+                f"session. If this model isn't a language model, set "
+                f"is_language_model = False on it to silence this. "
+                f"Underlying error: {type(e).__name__}: {e}",
+                file=sys.stderr,
+            )

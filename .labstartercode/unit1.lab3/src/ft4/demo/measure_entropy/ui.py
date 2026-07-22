@@ -129,7 +129,8 @@ def _banner(console: Console) -> None:
 def _summary(console: Console, m: SummaryModel, seed: int) -> None:
     value = _entropy_str(m)
     body = Table.grid(padding=(0, 2))
-    body.add_column(justify="right", style="bold cyan"); body.add_column()
+    body.add_column(justify="right", style="bold cyan")
+    body.add_column()
     body.add_row("stories", str(m.stories_seen))
     body.add_row("accuracy", f"{m.correct} / {m.trials}   ({m.accuracy * 100:.1f}%)")
     body.add_row("", "")

@@ -29,7 +29,7 @@ class NeuralNgram(L.LightningModule):
         NeuralNgram predicts the next token according to a neural network,
         conditioned on the previous w tokens, where w = n - 1.
 
-        At each pos, cw tokens (including the current token) are taken as a lumped input, 
+        At each pos, w tokens (including the current token) are taken as a lumped input, 
         and used to predict the *next* token.
 
         n:                     The context window w used for prediction is n - 1.
@@ -65,7 +65,8 @@ class NeuralNgram(L.LightningModule):
         # MlpNet (models/mlp.py), nn.Sequential, nn.Linear, nn.LayerNorm, nn.RMSNorm, etc. may be useful
         #
         # TODO-LAB unit1.lab2
-        # self.net = ... 
+        self.net = ... 
+        raise NotImplementedError('TODO-LAB unit.lab2')
 
     def forward(self, tokens: Tensor) -> Tensor:
         """
@@ -131,7 +132,7 @@ class NeuralNgram(L.LightningModule):
         # Left pad (to allow a full ngram at pos 0)        
         pad_vec = self.embed.weight[self.padding_idx].detach()
         left_pad = pad_vec.view(1, 1, -1).expand(B, self.w, D)
-        padded = torch.cat([left_pad, embedded_tokens], dim=1)  # (B, L+cw, D)
+        padded = torch.cat([left_pad, embedded_tokens], dim=1)  # (B, L+w, D)
 
         # Take sliding windows of length n over dim=1
         windows = padded.unfold(dimension=1, size=self.n, step=1) # (B, L, n, D)
