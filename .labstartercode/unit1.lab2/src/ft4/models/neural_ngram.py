@@ -66,7 +66,7 @@ class NeuralNgram(L.LightningModule):
         #
         # TODO-LAB unit1.lab2
         self.net = ... 
-        raise NotImplementedError('TODO-LAB unit.lab2')
+        raise NotImplementedError('TODO-LAB unit1.lab2')
 
     def forward(self, tokens: Tensor) -> Tensor:
         """
@@ -103,7 +103,7 @@ class NeuralNgram(L.LightningModule):
         
         # Then, unembed each D vector to a V-dimensional to form logits over the vocab
         # The unembedding is usually a simple linear transformation using the embedding table weights
-        logits = None # TODO-LAB unit1.lab2
+        logits = ... # TODO-LAB unit1.lab2
         raise NotImplementedError("Implement _predict_next in unit1.lab2")
         return logits
 

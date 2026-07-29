@@ -1,0 +1,28 @@
+# rnn.yaml — config for rnn.py
+#
+# Overrides defaults.yaml.
+#
+# For tweaks you don't want to commit, drop them in rnn.local.yaml (gitignored).
+#
+# You can also config on the command line:
+#     ft4 train path/to/rnn.py --model.dim=64
+
+# RNNs are big and slow: Do not try to `--compile`.
+model:
+  dim: 192
+  depth: 2
+  expansion_factor: 4
+  lr: 3.0e-3
+  weight_decay: 1.0e-2
+  warmup_steps: 1000
+
+data:
+  class_path: ft4.pipeline.stories_data_module.StoriesDataModule
+  init_args:
+    seq_len: 64
+    batch_size: 256
+    data_size: full
+
+trainer:
+  max_epochs: 3
+  gradient_clip_val: 1.0
