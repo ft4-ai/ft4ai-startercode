@@ -2,7 +2,6 @@ import math
 
 import torch
 from torch import nn
-from torch.nn.functional import scaled_dot_product_attention
 
 class Attention(nn.Module):
     def __init__(self, dim: int, n_heads: int=8):
@@ -47,7 +46,7 @@ class Attention(nn.Module):
 
         # Determine the weighted_vals for the context
         # This should take about a dozen lines
-        weighted_vals = ... # TODO unit2.lab3
+        weighted_vals = ... # TODO-LAB unit2.lab3
         raise NotImplementedError('Implement in unit2.lab3')
 
         outs = self.O(weighted_vals)

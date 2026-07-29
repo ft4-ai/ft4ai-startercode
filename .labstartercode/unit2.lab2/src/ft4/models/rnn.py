@@ -64,8 +64,8 @@ class Rnn(L.LightningModule):
         # Initialize a neural net that will be used by `update_h`.
         # See `update_h` for requirements.
         # Hint: A single line of code may be enough.
-        self.update_h_net = ... # TODO unit2.lab1
-        raise NotImplementedError('Implement in unit2.lab1')
+        self.update_h_net = ... # TODO-LAB unit2.lab2
+        raise NotImplementedError('Implement in unit2.lab2')
 
         # Initialize a neural net that will be used by `forward` (see there) 
         # to take each h vector and map it to a vector, of the same size, 
@@ -77,7 +77,7 @@ class Rnn(L.LightningModule):
         # MlpNet (models/mlp.py), nn.Sequential, nn.Linear, nn.LayerNorm, nn.RMSNorm, etc. may be useful
         #
         self.prediction_head = ... # Shape: D --> D
-        raise NotImplementedError('Implement in unit2.lab1') # TODO-LAB unit2.lab1
+        raise NotImplementedError('Implement in unit2.lab2') # TODO-LAB unit2.lab2
 
     def forward(self, tokens):
         """Next-token logits at every position.
@@ -133,8 +133,8 @@ class Rnn(L.LightningModule):
         # How will you feed both x and h to the net?
         # You might concatenate them, or even just add them together.
         
-        next_h = ... # TODO-LAB unit2.lab1
-        raise NotImplementedError('Implement in unit2.lab1')
+        next_h = ... # TODO-LAB unit2.lab2
+        raise NotImplementedError('Implement in unit2.lab2')
         return next_h
     
     def _token2vec(self, tokens: torch.Tensor) -> torch.Tensor:

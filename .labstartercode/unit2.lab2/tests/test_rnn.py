@@ -17,6 +17,7 @@ from test_helpers import (
     xy_from_tokens,
 )
 
+pytestmark = pytest.mark.lab("unit2.lab2")
 
 def _small_rnn(V: int = 32, pad: int = 0, dim: int = 64) -> Rnn:
     return Rnn(vocab_size=V, padding_idx=pad, dim=dim, expansion_factor=2, depth=2, lr=3e-3)
